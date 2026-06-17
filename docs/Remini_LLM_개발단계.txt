@@ -1,0 +1,172 @@
+================================================================================
+              Remini LLM 개발 단계 (Development Phases)
+                          팀명 : MemorIE
+================================================================================
+
+작성 목적 : "어떤 순서로 LLM 시스템을 만들어 왔는가" 를 PPT로 표현하기
+            위한 단계별 정리.
+
+--------------------------------------------------------------------------------
+■ 전체 개발 단계 한눈에
+--------------------------------------------------------------------------------
+
+ Phase 0  ── 문제 정의 & 요구사항 수집
+ Phase 1  ── 기술 서베이 & 모델 비교
+ Phase 2  ── 로컬 LLM 환경 구축 (Ollama)
+ Phase 3  ── 프롬프트 엔지니어링 v1 (단순 챗봇)
+ Phase 4  ── STT/TTS 통합 (음성 루프 완성)
+ Phase 5  ── RAG v1 (JSON · 토큰 매칭)
+ Phase 6  ── RAG v2 (pgvector · bge-m3 임베딩)
+ Phase 7  ── Dual Knowledge Graph 설계 (Neo4j AuraDB) ★최대 난관
+ Phase 8  ── 지식 자동 추출 파이프라인 (LLM 3단계)
+ Phase 9  ── 보호자 승인 게이트 + Caregiver App 연동
+ Phase 10 ── Mode Router & Proactive Trigger
+ Phase 11 ── 3단계 안전장치 (Risk Mgmt)
+ Phase 12 ── H200 전환 + 모델 업그레이드 (14B → 35B)
+ Phase 13 ── XTTS v2 가족 음성 클로닝
+ Phase 14 ── 검증 / 사용자 테스트 (예정)
+ Phase 15 ── Planning Agent 자체 구현 (예정)
+
+--------------------------------------------------------------------------------
+■ 단계별 상세 (PPT 카드용)
+--------------------------------------------------------------------------------
+
+[Phase 0]  문제 정의 & 요구사항
+ - 치매환자 비약물치료(회상치료) 자동화 가능성 탐색
+ - 보호자 부담 감소·환자 정서 안정 두 축 확정
+ - 핵심 제약 : 데이터 외부 유출 금지(의료 도메인)
+ - 산출물 : 주제선정 PPT, 페르소나, 시나리오
+
+[Phase 1]  기술 서베이 & 모델 비교
+ - 후보 : GPT-4 / Claude / HyperCLOVA X / Llama 3 / Qwen
+ - 평가 축 : 한국어 / 로컬 가능 / 프라이버시 / 비용 / 컨텍스트
+ - DEMENTIA-PLAN 논문(2503.20950) 분석 → Dual KG 영감
+ - 결정 : Qwen + 로컬 실행
+
+[Phase 2]  로컬 LLM 환경 구축
+ - Ollama 설치, qwen2.5:14b pull
+ - FastAPI(ai-server) 부트스트랩, /chat 엔드포인트 mock
+ - .env 통합, 0.0.0.0 바인딩 규칙 확립
+ - 산출물 : start.sh / stop.sh / status.sh
+
+[Phase 3]  프롬프트 엔지니어링 v1
+ - 단순 system prompt + user message 왕복
+ - 치매 환자 톤(짧은 문장, 반복 허용, 따뜻함) 가이드 작성
+ - 첫 시연 가능한 "텍스트 챗봇" 완성
+ - 한계 : 기억 없음 · 위험 응답 가능
+
+[Phase 4]  STT/TTS 통합 (음성 루프)
+ - STT : Faster-Whisper(small, int8, ko, VAD)
+ - TTS 1세대 : TTSForge → 음질 부족
+ - TTS 2세대 : Edge-TTS ko-KR-SunHiNeural 채택
+ - 환자용 Web UI(ai-server/web/)에서 음성 ↔ 텍스트 루프 완성
+
+[Phase 5]  RAG v1 (JSON 베이스라인)
+ - memories.json 토큰 교집합 점수
+ - 최소 동작 보장 · 폴백용으로 영구 보존
+ - 한계 : 의미 검색 불가
+
+[Phase 6]  RAG v2 (벡터 검색)
+ - BAAI/bge-m3 임베딩 도입
+ - PostgreSQL + pgvector 테이블 memory_vectors
+ - TOP-K 코사인 유사도 검색
+ - RetrievalService 추상화 → 계층화 구조 기반 마련
+
+[Phase 7]  Dual Knowledge Graph 설계  ★최대 난관
+ - Neo4j AuraDB(Cloud) 선정 — 매니지드 + Cypher
+ - 스키마 합의 : Persona → GraphEntity → Graph(허브)
+ - 엔티티 14종 / 관계 12종 정의
+ - Daily Care vs Life Memory 분리 기준 확립
+ - 연동 자체가 가장 빡센 작업 — 한글 토큰화, 드라이버 양쪽
+   (Python/Node), 커넥션 풀
+
+[Phase 8]  지식 자동 추출 파이프라인
+ - new_knowledge_detector.py — LLM 기반 새 정보 감지
+ - knowledge_confirmation.py — 자연스러운 재확인 turn 주입
+ - knowledge_extractor.py    — structured output(label/relation)
+ - 백그라운드 비차단 태스크로 응답 지연 0
+
+[Phase 9]  보호자 승인 게이트 & Caregiver App
+ - Express API 서버(api-server :5000) 구축
+ - JWT + bcrypt 인증
+ - PendingKnowledge / Alert 노드 연계
+ - Expo Router 기반 보호자 앱(:8082) — 승인/거부 UI
+ - AI 서버 → API 서버 webhook 으로 KG 쓰기 일원화
+
+[Phase 10] Mode Router & Proactive Trigger
+ - 4 모드 : routine / memory / emotion / bridge
+ - 모드별 RAG budget 분배 (daily vs life)
+ - MediaPipe Face Mesh — 눈감김·침묵 감지 → AI 선제 발화
+
+[Phase 11] 3단계 안전장치 (Risk Management)
+ (1) Rule Filter    — 의료조언/약물 변경/자해 차단
+ (2) Prompt Design  — system prompt 에 안전 규칙 내장
+ (3) Caregiver Loop — 의심 응답 → 보호자 카드
+
+[Phase 12] H200 전환 & 모델 업그레이드
+ - 학내 H200 GPU 서버(<SERVER_IP>) 확보
+ - qwen2.5:14b → qwen3:35b 검토·전환 진행
+ - latency vs 품질 트레이드오프 측정
+
+[Phase 13] XTTS v2 가족 음성 클로닝
+ - 가족 음성 5~10분 샘플로 voice clone
+ - 회상치료 효과 강화 (익숙한 목소리 = 정서 안정)
+ - 현재 PoC 단계
+
+[Phase 14] 검증 / 사용자 테스트 (예정)
+ - 부산광역치매센터 전문가 섭외 진행 중
+ - 환자 설문 기반 생애기억 인사이트 반영
+ - 정성 평가(만족도) + 정량 평가(대화 길이·반복·감정어)
+
+[Phase 15] Planning Agent 자체 구현 (예정)
+ - DEMENTIA-PLAN 을 그대로 재현하지 않고 팀 자체 설계
+ - KG 기반 다음 발화 계획 + 모드 전이 정책 학습
+
+--------------------------------------------------------------------------------
+■ PPT 표현 추천 (3가지 옵션)
+--------------------------------------------------------------------------------
+
+[옵션 A]  타임라인 (가로 막대)
+
+ P0──P1──P2──P3──P4──P5──P6──P7──P8──P9──P10──P11──P12──P13──P14──P15
+ 요구 서베이 환경 v1  음성 RAG1 RAG2 KG★ 추출 보호자 모드 안전 H200 음성 검증 Plan
+                                                                       (예정)
+
+[옵션 B]  3-Track 스윔레인
+
+ ┌─────────────────┬────────────────────────────┐
+ │ Track            │ Phase 모음                  │
+ ├─────────────────┼────────────────────────────┤
+ │ 모델/추론        │ P1 → P2 → P3 → P12          │
+ │ 메모리/지식      │ P5 → P6 → P7 → P8           │
+ │ 상호작용/안전    │ P4 → P9 → P10 → P11 → P13   │
+ └─────────────────┴────────────────────────────┘
+
+[옵션 C]  Maturity 계단형
+
+                                              ┌─ P15 Planning Agent
+                                         ┌────┘
+                                    ┌────┘ P12~P14 고도화·검증
+                               ┌────┘
+                          ┌────┘ P9~P11 안전·보호자
+                     ┌────┘
+                ┌────┘ P7~P8 Dual KG (★)
+           ┌────┘
+      ┌────┘ P4~P6 음성 + RAG
+ ┌────┘
+ P0~P3 기반 구축
+
+--------------------------------------------------------------------------------
+■ 핵심 메시지 (PPT 마지막 슬라이드용)
+--------------------------------------------------------------------------------
+
+ "빠른 MVP → 음성 루프 → 메모리(RAG) → 지식그래프 → 안전장치 → 검증"
+ 순서로 점진적 고도화.
+
+ - 가장 큰 기술적 도약 : Phase 7 Dual KG 구축
+ - 가장 큰 차별점      : Phase 8~9 LLM 자동 추출 + 보호자 승인 게이트
+
+================================================================================
+작성 : MemorIE 팀 · Remini 프로젝트
+문서 버전 : v1.0
+================================================================================

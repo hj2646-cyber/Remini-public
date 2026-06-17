@@ -1,0 +1,13 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+.env.local
+.env.prod
+.env.staging
+data/session_logs.ndjson
+data/conversations.db
+data/uploads/
+data/memory_photos/
+data/voice_profiles/
+dist/

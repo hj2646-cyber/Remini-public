@@ -1,0 +1,90 @@
+# =====================================================================
+# Remini 시연영상용 진화 단계 토글
+# =====================================================================
+# 사용법:
+#   1. 아래 `active_preset` 를 1~5 로 바꾸기
+#   2. `bash performance/restart.sh`
+#   3. 브라우저: http://<SERVER_IP>:8100/static/patient.html
+#
+# 본 시스템 (`ai-server/`, port 8000) 은 절대 안 건드림. 둘 다 동시에 켜둬도 OK.
+# =====================================================================
+
+# 🎯 영상 찍을 때 이 값만 바꾸세요 (1, 2, 3, 4, 5)
+active_preset: 5
+
+
+# ---------------------------------------------------------------------
+# Preset 정의 — 5단계 진화
+# ---------------------------------------------------------------------
+presets:
+
+  # ────────────────────────────────────────────────────────
+  # 1단계: 대화만 가능. 회상요법 X. STT 약함.
+  #   - 환자가 버벅거리면 못 알아먹음
+  #   - KG 지식은 사용 (예: 가족 이름 알면 답변 가능)
+  # ────────────────────────────────────────────────────────
+  1:
+    name: "1단계: 대화만 (회상요법 X, STT 약함)"
+    ui_theme: dark            # 검정 배경
+    photo_card: hidden        # 사진 카드 슬롯 자체 숨김
+    llm_model: gemma4:31b     # 베이스 파운데이션 모델
+    reminiscence_therapy: "off" # SYSTEM_PROMPT 에서 회상요법 가이드 + wiki 제거
+    force_geuleogunyo: false  # "그렇군요" 강제 X
+    stt_robust: false         # ⚠️ KG fragment 재구성 비활성 (버벅 못 알아먹음)
+    reminiscence_photo: false # 사진 자동 트리거 X
+
+  # ────────────────────────────────────────────────────────
+  # 2단계: 1단계 + 오류 허용 설계 추가
+  #   - 환자가 절어도 KG 단서 재구성으로 이해
+  # ────────────────────────────────────────────────────────
+  2:
+    name: "2단계: + 오류 허용 (STT robust ON)"
+    ui_theme: dark
+    photo_card: hidden
+    llm_model: gemma4:31b
+    reminiscence_therapy: "off"
+    force_geuleogunyo: false
+    stt_robust: true          # ✅ KG fragment 재구성 ON
+    reminiscence_photo: false
+
+  # ────────────────────────────────────────────────────────
+  # 3단계: 시스템 프롬프트 주입해서 회상요법 시도
+  #   - 회상요법 가이드 + wiki 다 들어가긴 하는데
+  #   - "그렇군요" 로 시작 강제 → 맥락 어긋남 (남발 친구)
+  # ────────────────────────────────────────────────────────
+  3:
+    name: "3단계: 회상요법 시도 (그렇군요 남발)"
+    ui_theme: dark
+    photo_card: hidden
+    llm_model: gemma4:31b
+    reminiscence_therapy: "full" # SYSTEM_PROMPT + wiki ON
+    force_geuleogunyo: true    # ⚠️ "그렇군요" 강제로 시작
+    stt_robust: true
+    reminiscence_photo: false
+
+  # ────────────────────────────────────────────────────────
+  # 4단계: 완전체 = 현재 시스템 (Stage 2.6 fine-tune)
+  #   - UI 만 옛날 검정, 사진은 OFF
+  # ────────────────────────────────────────────────────────
+  4:
+    name: "4단계: 현재 시스템 (UI 검정 + 사진 OFF)"
+    ui_theme: dark
+    photo_card: hidden
+    llm_model: remini-stage25-book:latest
+    reminiscence_therapy: "full"
+    force_geuleogunyo: false
+    stt_robust: true
+    reminiscence_photo: false
+
+  # ────────────────────────────────────────────────────────
+  # 5단계: 완전체 + 사진 작게 (자비스 orb 안 가리게 상단 200px)
+  # ────────────────────────────────────────────────────────
+  5:
+    name: "5단계: 현재 시스템 (UI 검정 + 사진 작게 상단 200px)"
+    ui_theme: dark
+    photo_card: top_200px      # 상단 200px, orb 안 가림
+    llm_model: remini-stage25-book:latest
+    reminiscence_therapy: "full"
+    force_geuleogunyo: false
+    stt_robust: true
+    reminiscence_photo: true

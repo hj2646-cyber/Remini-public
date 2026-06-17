@@ -1,0 +1,30 @@
+# 응답 raw — 1,080 trial × N tokens, 너무 큼
+data/responses/
+
+# 결과 점수 — 재현 가능하지만 재실행 비용 큼 (재생성용 시드만 커밋)
+data/results/*.csv
+data/results/*.json
+data/results/*.parquet
+!data/results/.gitkeep
+
+# 페르소나 raw KG / 캐시 / 매니페스트 — NVIDIA 라이센스(CC BY 4.0) 보수적 격리
+# 합의 후 풀기 (출처 명시 + 가상 데이터)
+data/personas/*.yaml
+data/personas/*.parquet
+data/personas/raw_sample.csv
+data/personas/manifest.csv
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# Notebook 체크포인트
+.ipynb_checkpoints/
+
+# ChromaDB 인덱스
+rag/chroma_db/
+
+# API 응답 캐시
+.cache/
+*.cache

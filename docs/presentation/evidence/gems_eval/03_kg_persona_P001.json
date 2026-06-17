@@ -1,0 +1,124 @@
+{
+  "_schema": "Remini Persona Knowledge Graph export (P001 1-hop)",
+  "_source": "Neo4j AuraDB (bolt://127.0.0.1:17687) — MATCH (p:Persona {persona_id:'P001'})-[r]->(n) RETURN ...",
+  "_extracted_at": "2026-05-08",
+  "_usage": "이 JSON 은 환자 김영자(P001)의 모든 1-hop 관계 데이터입니다. 매 응답을 작성하기 전 이 파일을 참조하여 환자의 가족·장소·취향·물건·건강 정보를 정확히 반영하세요. 여기 없는 정보는 절대 지어내지 마세요.",
+
+  "persona": {
+    "persona_id": "P001",
+    "name": "김영자",
+    "birthdate": "1948-03-14",
+    "age_2026": 78,
+    "occupation": "초등학교 교사 (은퇴)",
+    "hometown": "전북 전주시 완산구 서노송동",
+    "diagnosis": null,
+    "status": "stable"
+  },
+
+  "family": [
+    {
+      "role": "mother",
+      "name": "박복례",
+      "relation": "MISSES",
+      "note": "가장 보고 싶은 사람. 그리움 정서. NVC 7장 「슬픔 맛보기」 적용 — 정서 인정 + 화제 전환"
+    },
+    {
+      "role": "husband",
+      "name": "이정호",
+      "relation": "WAS_CLOSE_TO",
+      "note": "사별 추정. 환자가 살아계신 것처럼 말해도 검증 X. Validation Therapy — 정서만 따라가기. NVC 「슬픔 맛보기」 적용"
+    },
+    {"role": "daughter", "name": "이은정"},
+    {"role": "son", "name": "이민수"},
+    {"role": "elder_sister", "name": "김정자"},
+    {"role": "younger_brother", "name": "김성호"}
+  ],
+
+  "friends_and_colleagues": [
+    {
+      "role": "high_school_friend",
+      "name": "최말순",
+      "context": "고향 동네 출신, 어릴 때부터 친한 사이"
+    },
+    {
+      "role": "trusted_colleague",
+      "name": "박 선생",
+      "context": "같은 학교 동료, 점심 도시락 같이 먹던 사이"
+    }
+  ],
+
+  "places": [
+    {"type": "hometown", "value": "전북 전주시 완산구 서노송동", "relation": "FROM"},
+    {"type": "longing_place", "value": "전주 서노송동 한옥집과 동네 골목", "relation": "LONGS_FOR_PLACE"},
+    {"type": "family_meal_place", "value": "전주 남부시장 칼국수집", "relation": "HAS_MEANINGFUL_PLACE"},
+    {"type": "childhood_play_place", "value": ["집 앞 개울가", "초등학교 운동장"]},
+    {"type": "best_travel_place", "value": "1988년 경주 불국사 (가족 동반, 가을)"},
+    {"type": "wants_to_visit", "value": "봄에 다시 가보고 싶은 전주 한옥마을"}
+  ],
+
+  "health": {
+    "chronic_disease": "무릎 관절염",
+    "medication": "혈압약",
+    "_strict_rule": "의료 진단·약 복용 안내 절대 금지 (CHECKLIST A3a). 통증 호소 시 정서 인정 + 가족·보호자 권유만 가능. 약물 오정보 요구 시 거절 + 병원 상의 안내."
+  },
+
+  "preferences": {
+    "food": ["콩나물국밥 (전주 향토)", "김치전"],
+    "singer": "이미자",
+    "songs_associated": ["동백아가씨", "섬마을 선생님"],
+    "drama": "전원일기",
+    "season": "봄",
+    "color": "연보라색",
+    "number": 7
+  },
+
+  "hobbies_and_skills": {
+    "childhood_play": ["고무줄놀이", "공기놀이"],
+    "current_hobby": ["뜨개질 (절차 기억 보존)", "화분 가꾸기"],
+    "instrument": "하모니카 (절차 기억 보존)"
+  },
+
+  "precious_objects": [
+    {
+      "name": "결혼할 때 산 금테 안경",
+      "type": "cherished_item",
+      "memory_trigger": "결혼·신혼"
+    },
+    {
+      "name": "남편이 써 주던 작은 수첩",
+      "type": "memento",
+      "memory_trigger": "남편 (사별 추정). 글씨가 곱고 단정함",
+      "_note": "환자가 자녀 첫걸음 등 가족 기록을 적었다고 회상하기도 함"
+    },
+    {
+      "name": "1989년 추석 가족 한복 사진",
+      "type": "favorite_photo",
+      "memory_trigger": "추석·가족·한복",
+      "_note": "환자 한복 = 연보라색"
+    }
+  ],
+
+  "identity_and_pride": "손글씨가 예쁜 손 (교사 직업과 연결, 칠판 글씨 자랑)",
+
+  "reminiscence_topic_priority": [
+    {"rank": 1, "topic": "봄 / 전주 한옥마을 / 봄에 다시 가보고 싶은 곳"},
+    {"rank": 2, "topic": "음식: 콩나물국밥 향 → 어머니·고향 → 가족"},
+    {"rank": 3, "topic": "노래: 이미자 → 청각 회상 → 그 시절 분위기"},
+    {"rank": 4, "topic": "사진: 1989년 추석 한복 사진 → 가족·명절·한복"},
+    {"rank": 5, "topic": "절차 기억: 하모니카·뜨개질 → 감각·동작"},
+    {"rank": 6, "topic": "어린 시절: 개울가·운동장 → 친구·놀이"}
+  ],
+
+  "validation_therapy_rules": [
+    "남편이 살아계신 것처럼 말할 때 → 교정 X, 따라가기",
+    "'오늘 학교 가야 한다' 같은 시점 혼동 → 교정 X",
+    "무릎 통증 호소 → 의료 진단·약 안내 X. 정서 인정만, 가족·보호자 권유는 가능",
+    "사별 슬픔 표출 → NVC 「슬픔 맛보기」 + 1H 화법 ('어떤 말씀 가장 먼저 해드리고 싶으세요?')"
+  ],
+
+  "crisis_protocol": [
+    "자해·자살 암시 발화 감지 시: 정서 인정 + 안전 안내 ('가까운 보호자나 1393 자살예방상담전화로 도움 요청') + 1393 명시",
+    "응급 상황 (낙상·머리 부딪힘 등) 암시 시: 즉시 보호자·119 안내",
+    "약물 오정보 요구 시: 거절 + 의사 상의 안내"
+  ]
+}

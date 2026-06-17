@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="ko" style="height: 100%">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Remini" />
+    <meta name="theme-color" content="#A7C7E7" />
+    <link rel="manifest" href="/static/patient-react/manifest.webmanifest" />
+    <link rel="icon" type="image/svg+xml" href="/static/patient-react/icon.svg" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/patient-react/apple-touch-icon.png" />
+    <title>remeni-ai patient — performance demo</title>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"></script>
+    <script src="/static/voice-loop.js?v=20260429b"></script>
+    <script type="module" crossorigin src="/static/patient-react/assets/index-DldztZ3P.js"></script>
+    <link rel="stylesheet" crossorigin href="/static/patient-react/assets/index-Btz55Ehi.css">
+
+    <!-- 시연영상용 라벨 (load_preset.py 가 생성한 ui-config.js 읽기) -->
+    <script src="/static/ui-config.js" onerror="window.__PERF_CONFIG={preset_id:'?',preset_name:'(no config)'};"></script>
+    <script>
+      window.addEventListener('DOMContentLoaded', function () {
+        var cfg = window.__PERF_CONFIG || {};
+        var tag = document.createElement('div');
+        tag.textContent = '[' + (cfg.preset_id || '?') + '] ' + (cfg.preset_name || '');
+        tag.style.cssText = 'position:fixed;top:12px;left:12px;z-index:99999;background:rgba(0,0,0,0.72);color:#fdd28a;padding:8px 14px;border-radius:8px;font-size:14px;font-weight:700;letter-spacing:0.4px;font-family:Pretendard,"Noto Sans KR",sans-serif;border:1px solid rgba(253,210,138,0.32);pointer-events:none;';
+        document.body.appendChild(tag);
+      });
+    </script>
+
+    <!-- [preset 5 전용] 상단 200px 회상 사진 카드 — WS done event 의 reminiscence_photo 인터셉트 -->
+    <script>
+      (function setupPerfPhotoCard() {
+        var cfg = window.__PERF_CONFIG || {};
+        if (cfg.photo_card !== 'top_200px') return;  // preset 5 만 활성
+        var OrigWS = window.WebSocket;
+        function PerfWS(url, protocols) {
+          var ws = protocols !== undefined ? new OrigWS(url, protocols) : new OrigWS(url);
+          ws.addEventListener('message', function (ev) {
+            try {
+              var data = JSON.parse(ev.data);
+              if (data && data.type === 'done' && data.reminiscence_photo && data.reminiscence_photo.image_url) {
+                showPerfPhoto(data.reminiscence_photo);
+              }
+            } catch (e) { /* binary or non-JSON frames */ }
+          });
+          return ws;
+        }
+        PerfWS.prototype = OrigWS.prototype;
+        PerfWS.CONNECTING = OrigWS.CONNECTING;
+        PerfWS.OPEN = OrigWS.OPEN;
+        PerfWS.CLOSING = OrigWS.CLOSING;
+        PerfWS.CLOSED = OrigWS.CLOSED;
+        window.WebSocket = PerfWS;
+
+        function showPerfPhoto(photo) {
+          var img = document.getElementById('perf-photo-card');
+          if (!img) {
+            img = document.createElement('img');
+            img.id = 'perf-photo-card';
+            img.style.cssText = 'position:fixed;top:8px;left:50%;transform:translateX(-50%);width:320px;max-width:90vw;height:200px;object-fit:cover;border-radius:14px;z-index:9998;border:2px solid rgba(255,255,255,0.22);box-shadow:0 8px 28px rgba(0,0,0,0.55);pointer-events:none;';
+            (document.body || document.documentElement).appendChild(img);
+          }
+          img.src = photo.image_url;
+          if (photo.title) img.title = photo.title;
+        }
+      })();
+    </script>
+  </head>
+  <body style="height: 100%; margin: 0">
+    <div id="root" style="height: 100%"></div>
+  </body>
+</html>

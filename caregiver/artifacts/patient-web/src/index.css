@@ -1,0 +1,858 @@
+@import "tailwindcss";
+
+/* 색채심리 근거(김형희·최외선 2010, Birren 1995, Suenaga 1998):
+ * 치매 환자 정서 안정 = 고명도·고채도 난색 (노랑·살구·분홍·주황).
+ * 한색·무채색·검정 = 우울/무기력 매개 → 회피.
+ * 단일 라이트 테마(난색) — 다크 토글 폐기.
+ * 톤 v3 (2026-05-09): 명도 한 단계 ↓ — 살구/허니 베이스로 눈 부담 감소. */
+:root {
+  color-scheme: light;
+  --bg-a: #fbe9c4;          /* 살구 베이지 (주조 ~50%, 한 톤 어둡게) */
+  --bg-b: #f5dba8;          /* 허니 살구 */
+  --bg-c: #efcc8e;          /* 골든 베이지 (가장자리) */
+  --ink: #3e2723;           /* 매우 진한 브라운 (WCAG AA 충분 대비) */
+  --ink-soft: rgba(62, 39, 35, 0.88);
+  --line: rgba(78, 52, 46, 0.28);
+  --shadow: 0 20px 80px rgba(141, 110, 99, 0.22);
+  --accent-yellow: #ffd54f;
+  --accent-coral: #ffab91;
+  --accent-peach: #ffcc80;
+  --panel-bg: rgba(255, 253, 245, 0.97);   /* 거의 불투명 — 노인 가독성 */
+  --panel-bg-soft: rgba(255, 253, 245, 0.92);
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+  height: 100dvh;
+}
+
+html,
+body {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  overscroll-behavior: none;
+  touch-action: manipulation;
+  -webkit-overflow-scrolling: auto;
+}
+
+body {
+  margin: 0;
+  background:
+    radial-gradient(ellipse at 50% 35%, rgba(232, 168, 96, 0.22), transparent 55%),
+    radial-gradient(ellipse at 18% 82%, rgba(217, 134, 91, 0.18), transparent 60%),
+    radial-gradient(ellipse at 82% 18%, rgba(232, 188, 121, 0.16), transparent 60%),
+    var(--bg-a);
+  color: var(--ink);
+  font-family: "Pretendard", "Noto Sans KR", "Apple SD Gothic Neo", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+.patient-root {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  overscroll-behavior: none;
+  touch-action: manipulation;
+}
+
+.camera-feed {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.visual-layer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.visual-layer.hidden {
+  display: none;
+}
+
+.visual-glow,
+.visual-orb {
+  position: absolute;
+  border-radius: 999px;
+  filter: blur(24px);
+  opacity: 0.82;
+}
+
+.visual-glow-a {
+  top: -10vh;
+  left: -12vw;
+  width: 32vw;
+  height: 32vw;
+  background: radial-gradient(circle, rgba(232, 168, 96, 0.26), transparent 70%);
+  animation: floatA 14s ease-in-out infinite;
+}
+
+.visual-glow-b {
+  right: -10vw;
+  bottom: -16vh;
+  width: 38vw;
+  height: 38vw;
+  background: radial-gradient(circle, rgba(217, 134, 91, 0.22), transparent 70%);
+  animation: floatB 18s ease-in-out infinite;
+}
+
+.visual-orb-a {
+  top: 20vh;
+  left: 16vw;
+  width: 18vw;
+  height: 18vw;
+  background: radial-gradient(circle, rgba(232, 168, 96, 0.16), transparent 65%);
+  animation: driftA 16s linear infinite;
+}
+
+.visual-orb-b {
+  right: 18vw;
+  top: 18vh;
+  width: 12vw;
+  height: 12vw;
+  background: radial-gradient(circle, rgba(232, 188, 121, 0.18), transparent 65%);
+  animation: driftB 19s linear infinite;
+}
+
+.visual-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(141, 110, 99, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(141, 110, 99, 0.05) 1px, transparent 1px);
+  background-size: 56px 56px;
+  mask-image: linear-gradient(180deg, transparent, rgba(0, 0, 0, 0.7) 22%, rgba(0, 0, 0, 0.7) 80%, transparent);
+  opacity: 0.16;
+}
+
+.center-stage {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: grid;
+  place-items: center;
+  padding: 8vh 6vw 26vh;
+  pointer-events: none;
+  opacity: 1;
+  transition: opacity 260ms ease, transform 260ms ease;
+}
+
+.center-stage.visualizer-hidden {
+  opacity: 0;
+  transform: scale(0.96);
+}
+
+/* Fullscreen JARVIS orb background — sits above camera feed, below all UI */
+.jarvis-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 1;
+  transition: opacity 500ms ease;
+}
+
+.jarvis-bg.jarvis-bg--dim {
+  opacity: 0.55;
+}
+
+.jarvis-bg .patient-aura,
+.jarvis-bg .patient-aura--lg,
+.jarvis-bg .patient-aura--md,
+.jarvis-bg .patient-aura--sm {
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  filter: drop-shadow(0 0 90px rgba(13, 71, 161, 0.45));
+}
+
+.patient-aura {
+  width: min(48vw, 420px);
+  height: min(48vw, 420px);
+  max-width: 100%;
+  max-height: 100%;
+  filter: drop-shadow(0 0 48px rgba(13, 71, 161, 0.50));
+}
+
+.patient-aura--sm {
+  width: min(32vw, 260px);
+  height: min(32vw, 260px);
+}
+
+.patient-aura--md {
+  width: min(40vw, 340px);
+  height: min(40vw, 340px);
+}
+
+.patient-aura--lg {
+  width: min(48vw, 420px);
+  height: min(48vw, 420px);
+}
+
+.memory-stage {
+  /* 화면 상단부터 자막 직전까지 — 자비스 덮음, 자막 영역만 비움 */
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 22vh;          /* 자막 영역 (subtitle bottom 7vh + 자막 높이 ~15vh) 비움 */
+  z-index: 8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1vh 1vw;
+  pointer-events: none;
+  animation: memoryStageFadeIn 600ms ease-out both;
+  transition: opacity 500ms ease, transform 500ms ease, filter 500ms ease;
+}
+
+.memory-stage.memory-stage--fading {
+  opacity: 0 !important;
+  transform: scale(0.96);
+  filter: blur(2px);
+  animation: none !important;
+}
+
+.memory-stage.memory-stage--fading .memory-frame,
+.memory-stage.memory-stage--fading .memory-image {
+  animation: none !important;
+}
+
+.memory-frame {
+  /* stage 가용 영역 100% — image 가 그 안에서 비율 유지하며 최대 표시.
+   * chrome (border/bg/shadow) 제거 — image 자체가 액자. */
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  padding: 0;
+  overflow: visible;
+  backdrop-filter: none;
+  animation: memoryFrameFadeIn 700ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+.memory-image {
+  /* width/height 100% + contain = 작은 사진도 가용 영역 꽉 채우고 비율 유지 */
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 18px;
+  box-shadow: 0 14px 36px rgba(141, 110, 99, 0.32);
+  animation: memoryImageFadeIn 800ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+@keyframes memoryStageFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes memoryFrameFadeIn {
+  from { opacity: 0; transform: scale(0.96); filter: blur(6px); }
+  to { opacity: 1; transform: scale(1); filter: blur(0); }
+}
+
+@keyframes memoryImageFadeIn {
+  from { opacity: 0; transform: scale(0.92); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.subtitle-wrap {
+  position: absolute;
+  left: 50%;
+  bottom: 7vh;
+  transform: translateX(-50%);
+  width: calc(100vw - 48px);
+  max-width: 1600px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  text-align: center;
+  z-index: 10;
+}
+
+.subtitle {
+  margin: 0;
+  padding: 20px 32px;
+  border-radius: 32px;
+  background: var(--panel-bg);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  font-size: clamp(1.4rem, 2.4vw, 2.3rem);
+  font-weight: 700;
+  line-height: 1.45;
+  text-shadow: none;
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(18px);
+  /* 기본은 한 줄로, 화면 폭을 넘치면 다음 줄로. 마지막 단어가 혼자
+     떨어지는 widow 현상은 text-wrap: pretty 로 방지, fallback 은
+     text-wrap: balance. */
+  white-space: normal;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+  text-wrap: pretty;
+  max-width: 100%;
+  width: fit-content;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.listening-text {
+  margin: 0;
+  padding: 10px 18px;
+  border-radius: 999px;
+  background: var(--panel-bg-soft);
+  color: var(--ink);
+  font-size: clamp(0.92rem, 1.2vw, 1.12rem);
+  line-height: 1.4;
+  border: 1px solid var(--line);
+}
+
+.greeting-pending {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 28px;
+  border-radius: 32px;
+  background: var(--panel-bg);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  font-size: clamp(1.1rem, 1.8vw, 1.6rem);
+  font-weight: 600;
+  line-height: 1.4;
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(18px);
+  max-width: 100%;
+}
+
+.greeting-spinner {
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  border: 3px solid rgba(141, 110, 99, 0.20);
+  border-top-color: #ff8a65;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.greeting-pending-text {
+  display: inline-block;
+  text-wrap: pretty;
+  word-break: keep-all;
+}
+
+.end-turn-btn {
+  display: block;
+  margin: 14px auto 0;
+  padding: 16px 48px;
+  border: none;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #ffb74d, #ff8a65);
+  color: #4e342e;
+  font-size: clamp(1.1rem, 1.6vw, 1.4rem);
+  font-weight: 800;
+  cursor: pointer;
+  pointer-events: auto;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 6px 24px rgba(255, 138, 101, 0.35);
+  transition: background 0.2s ease, transform 0.1s ease;
+}
+
+.end-turn-btn:active {
+  transform: scale(0.95);
+  background: linear-gradient(135deg, #ffa726, #ff7043);
+}
+
+.admin-toggle-btn {
+  position: absolute;
+  top: 22px;
+  left: 22px;
+  z-index: 25;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 12px 18px;
+  background: var(--panel-bg);
+  color: var(--ink);
+  font-size: 0.95rem;
+  font-weight: 700;
+  backdrop-filter: blur(16px);
+  box-shadow: 0 16px 34px rgba(141, 110, 99, 0.18);
+  cursor: pointer;
+}
+
+.admin-drawer {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+
+.admin-drawer-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(141, 110, 99, 0.35);
+  backdrop-filter: blur(20px);
+}
+
+.admin-drawer-panel {
+  position: relative;
+  width: min(1240px, calc(100vw - 32px));
+  height: min(88vh, 940px);
+  border-radius: 32px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background: #fffdf5;
+  box-shadow: 0 26px 90px rgba(141, 110, 99, 0.30);
+}
+
+.admin-drawer-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  align-items: flex-start;
+  padding: 18px 20px 14px;
+  background: linear-gradient(135deg, #fbe9c4, #efcc8e);
+  border-bottom: 1px solid var(--line);
+}
+
+.admin-kicker {
+  margin: 0 0 6px;
+  color: #5d4037;          /* 진한 브라운 — 가독성 */
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.admin-title {
+  margin: 0;
+  color: #3e2723;
+  font-size: clamp(1.15rem, 2vw, 1.5rem);
+  font-weight: 800;
+}
+
+.admin-copy {
+  margin: 6px 0 0;
+  color: #4e342e;
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+
+.admin-head-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.admin-head-btn {
+  border: 1px solid rgba(78, 52, 46, 0.22);
+  border-radius: 14px;
+  padding: 11px 14px;
+  background: #fffdf5;
+  color: #3e2723;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.admin-head-btn.primary {
+  background: linear-gradient(135deg, #ffb74d, #ff8a65);
+  color: #3e2723;
+  border-color: transparent;
+}
+
+.admin-frame {
+  display: block;
+  width: 100%;
+  height: calc(100% - 102px);
+  border: 0;
+  background: #fbe9c4;
+}
+
+.start-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(141, 110, 99, 0.18);
+  backdrop-filter: blur(24px);
+}
+
+.start-panel {
+  width: min(720px, calc(100vw - 32px));
+  padding: 34px 32px;
+  border-radius: 34px;
+  border: 1px solid var(--line);
+  background: #fffdf5;             /* 거의 흰색 — 시작 화면 글자 가독성 */
+  box-shadow: var(--shadow);
+  text-align: center;
+}
+
+.start-kicker {
+  margin: 0 0 10px;
+  color: #6d4c41;
+  font-size: 0.84rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.start-title {
+  margin: 0;
+  color: var(--ink);
+  font-size: clamp(1.9rem, 4vw, 3.3rem);
+  line-height: 1.2;
+  font-weight: 800;
+}
+
+.start-copy {
+  margin: 16px auto 0;
+  max-width: 560px;
+  color: #4e342e;
+  font-size: clamp(1rem, 1.8vw, 1.16rem);
+  line-height: 1.6;
+}
+
+.start-field {
+  display: block;
+  width: min(360px, 100%);
+  margin: 22px auto 0;
+  text-align: left;
+}
+
+.start-field-label {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--ink);
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.start-input {
+  width: 100%;
+  min-height: 54px;
+  padding: 0 18px;
+  border-radius: 18px;
+  border: 1px solid rgba(78, 52, 46, 0.32);
+  background: #ffffff;
+  color: var(--ink);
+  font-size: 1rem;
+  outline: none;
+}
+
+.start-input::placeholder {
+  color: rgba(78, 52, 46, 0.55);
+}
+
+.start-hint {
+  margin: 10px auto 0;
+  max-width: 420px;
+  color: #4e342e;
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+
+.start-btn {
+  margin-top: 24px;
+  min-width: 180px;
+  min-height: 58px;
+  padding: 0 26px;
+  border: 0;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #ffb74d, #ff8a65);
+  color: #3e2723;
+  font-size: 1.05rem;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 16px 28px rgba(255, 138, 101, 0.32);
+}
+
+.loading-wrap {
+  margin-top: 28px;
+  animation: fadeInUp 0.4s ease;
+}
+
+.loading-spinner {
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 18px;
+  border: 4px solid rgba(141, 110, 99, 0.18);
+  border-top-color: #ff8a65;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.loading-text {
+  margin: 0 0 14px;
+  color: var(--ink);
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.loading-bar-track {
+  width: min(320px, 80%);
+  height: 8px;
+  margin: 0 auto 10px;
+  border-radius: 999px;
+  background: rgba(78, 52, 46, 0.20);
+  overflow: hidden;
+}
+
+.loading-bar-fill {
+  width: 0;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #ffd54f, #ff8a65);
+  transition: width 0.5s ease;
+}
+
+.loading-percent {
+  margin: 0;
+  color: #4e342e;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.voice-picker {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: #fffdf5;
+  color: var(--ink);
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(78, 52, 46, 0.24);
+  box-shadow: 0 6px 16px rgba(141, 110, 99, 0.22);
+}
+
+.voice-picker select {
+  background: #ffffff;
+  color: var(--ink);
+  border: 1px solid rgba(78, 52, 46, 0.32);
+  border-radius: 6px;
+  padding: 5px 8px;
+  font-weight: 700;
+}
+
+.debug-panel {
+  position: absolute;
+  right: 16px;
+  top: 16px;
+  min-width: 220px;
+  max-width: min(320px, calc(100vw - 32px));
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: #fffdf5;
+  color: var(--ink);
+  border: 1px solid rgba(78, 52, 46, 0.22);
+  box-shadow: 0 6px 16px rgba(141, 110, 99, 0.18);
+}
+
+.debug-title {
+  margin: 0 0 8px;
+  color: #bf360c;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.debug-line {
+  margin: 4px 0;
+  font-size: 0.84rem;
+  line-height: 1.35;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes floatA {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(6vw, 4vh, 0) scale(1.08);
+  }
+}
+
+@keyframes floatB {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(-5vw, -5vh, 0) scale(1.05);
+  }
+}
+
+@keyframes driftA {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(4vw, 6vh, 0);
+  }
+}
+
+@keyframes driftB {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(-3vw, 5vh, 0);
+  }
+}
+
+@media (max-width: 900px) {
+  .center-stage {
+    padding: 10vh 4vw 28vh;
+  }
+
+  .patient-aura {
+    width: min(68vw, 360px);
+    height: min(68vw, 360px);
+  }
+
+  .memory-stage {
+    bottom: 24vh;          /* 모바일 자막 영역이 좀 더 큼 */
+  }
+
+  .memory-frame {
+    border-radius: 14px;
+  }
+
+  .memory-image {
+    border-radius: 14px;
+  }
+
+  .subtitle-wrap {
+    bottom: 5vh;
+    width: calc(100vw - 28px);
+  }
+
+  .admin-drawer {
+    padding: 12px;
+  }
+
+  .admin-drawer-panel {
+    width: calc(100vw - 24px);
+    height: calc(100vh - 24px);
+    border-radius: 22px;
+  }
+
+  .admin-drawer-head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .admin-head-actions {
+    justify-content: flex-end;
+  }
+
+  .admin-frame {
+    height: calc(100% - 146px);
+  }
+}
+
+@media (max-width: 640px) {
+  .center-stage {
+    padding: 12vh 14px 32vh;
+  }
+
+  .patient-aura {
+    width: min(76vw, 300px);
+    height: min(76vw, 300px);
+  }
+
+  .memory-stage {
+    bottom: 28vh;          /* 작은 화면 자막 영역 더 큼 */
+  }
+
+  .memory-frame {
+    border-radius: 12px;
+  }
+
+  .memory-image {
+    border-radius: 12px;
+  }
+
+  .subtitle {
+    padding: 18px 18px;
+    border-radius: 24px;
+    font-size: 1.35rem;
+  }
+
+  .listening-text {
+    width: calc(100vw - 44px);
+  }
+
+  .start-panel {
+    padding: 26px 22px;
+    border-radius: 26px;
+  }
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* ─────────────────────────────────────────────────────────────
+ * Theme toggle button (시작 화면 우상단). 시작 후엔 start-overlay
+ * 가 사라지므로 자동으로 같이 숨겨진다.
+ * ───────────────────────────────────────────────────────────── */
+/* 라이트/다크 토글 폐기 — 단일 라이트(난색) 테마. */

@@ -1,0 +1,361 @@
+================================================================================
+         Remini 지식 그래프(Knowledge Graph) 구축 상세 문서
+              — Dual Knowledge Graph Architecture —
+                        팀명 : MemorIE
+================================================================================
+
+작성 목적 : 종합설계프로젝트 중간 개발 보고서의 보조 문서로서,
+            Remini 시스템의 지식 그래프 설계 및 구축 과정을 코드 레벨까지
+            상세히 기록한다.
+
+--------------------------------------------------------------------------------
+목   차
+--------------------------------------------------------------------------------
+ 1. 개요 — 왜 Dual Knowledge Graph인가
+ 2. 저장소 선택 — 왜 Neo4j AuraDB인가
+ 3. 스키마 설계 (노드 라벨 / 엔티티 / 관계 타입)
+ 4. 대화 → KG 자동 구축 파이프라인 (LLM 3단계 + 보호자 승인 게이트)
+ 5. Daily Care vs Life Memory 자동 분류 로직
+ 6. KG → 대화 RAG 연동 (3계층 Fallback)
+ 7. 파일·함수 지도 (코드 레퍼런스)
+ 8. 구현 상태 (완료 / 진행중 / 미착수)
+ 9. 시행착오 기록
+10. 향후 과업
+
+================================================================================
+1. 개요 — 왜 Dual Knowledge Graph인가
+================================================================================
+
+Remini는 치매 환자와의 자연스러운 대화를 통해 비약물치료(회상치료,
+Reminiscence Therapy)를 제공하는 것을 목표로 한다. 이때 LLM이 "이 환자를
+진짜 알고 있는 것처럼" 반응하려면, 단순한 벡터 검색만으로는 부족하다.
+
+ - 환자마다 고유한 생애사(결혼, 직업, 고향, 자녀 등)가 있고
+ - 동시에 매일 반복되는 루틴(투약 시각, 식사, 산책, 수면)이 있으며
+ - 이 둘은 서로 다른 주기와 맥락에서 소환된다.
+
+단일 KG로 두 축을 섞으면 회상치료 모드에서 "아까 약 드셨어요?" 같은
+루틴 정보가 튀어나오거나, 반대로 루틴 지원 모드에서 옛 추억이 우선되어
+의도한 치료 효과가 흐려진다.
+
+따라서 Remini는 DEMENTIA-PLAN(arXiv 2503.20950, Song et al. 2025)의
+dual-graph 개념을 차용하되, 팀 자체 구조로 재설계하여 다음과 같이
+명확히 분리한다.
+
+ ┌───────────────────────────────────────────────────────────────┐
+ │  Daily Care Graph  │  투약 · 식사 · 수면 · 산책 · 건강 상태   │
+ │  Life Memory Graph │  가족 · 직업 · 고향 · 추억 · 정체성      │
+ └───────────────────────────────────────────────────────────────┘
+
+각 그래프는 독립적으로 저장·검색되며, 대화 모드(routine_support /
+memory_support / emotion_grounding / bridge_mode)에 따라 검색 비율이
+동적으로 분배된다.
+
+================================================================================
+2. 저장소 선택 — 왜 Neo4j AuraDB인가
+================================================================================
+
+지식 저장소 후보를 다음과 같이 비교하였다.
+
+ ┌──────────────────┬────────────────────────────────────────────┐
+ │ 후보              │ 판정 사유                                  │
+ ├──────────────────┼────────────────────────────────────────────┤
+ │ JSON 파일         │ 프로토타입에는 적합하나 관계 표현 불가     │
+ │ SQLite            │ 테이블 구조로 "남편의 친구의 아들" 같은    │
+ │                   │ 다중 홉 관계 질의 비효율                   │
+ │ PostgreSQL +      │ 벡터 유사도 검색 가능하나 그래프 탐색 없음 │
+ │   pgvector        │                                            │
+ │ ★ Neo4j AuraDB    │ Cypher로 다중 홉 관계 탐색, 매니지드       │
+ │   (Cloud)         │ 클라우드로 서버 운영 부담 ↓, 시각화 도구   │
+ │                   │ 지원                                       │
+ └──────────────────┴────────────────────────────────────────────┘
+
+최종적으로는 "Neo4j AuraDB = KG 저장소", "PostgreSQL + pgvector =
+벡터 RAG 2순위 백업", "JSON = 폴백" 형태의 하이브리드 스토리지를 채택
+했다.
+
+Neo4j AuraDB 연동이 프로젝트 내 최대 난관이었던 이유:
+
+ (1) 한국어 토큰화 기반 Cypher 검색 튜닝 — 영어 기반 예제가 대부분이라
+     한국어 조사/어미 때문에 lexical matching이 쉽게 실패했다.
+ (2) Persona–GraphEntity–Graph 3계층 스키마 합의 — 초기에는 Persona에
+     직접 GraphEntity를 붙였으나, dual-graph 분리를 위해 중간 허브
+     노드(Graph)를 도입.
+ (3) AI 서버(Python neo4j-driver) / API 서버(Node neo4j-driver) 양쪽에서
+     동일한 스키마/쿼리가 일관되게 동작하도록 맞춤.
+ (4) AuraDB Free Tier의 노드·관계 수 제한과 커넥션 풀 관리.
+
+================================================================================
+3. 스키마 설계
+================================================================================
+
+3.1 노드 라벨
+---------------------------------------------------------------------------
+ Persona           : 환자 1인을 나타내는 루트 노드 (persona_id = "P001")
+ Graph             : Dual 그래프의 허브 노드
+                     (graph_type: "daily_care" | "life_memory")
+ GraphEntity       : 실제 지식 단위 (엔티티 라벨 + 이름 + 설명 등)
+ PendingKnowledge  : 보호자 승인 대기 중인 후보 지식
+ Patient           : 보호자 앱 도메인의 환자 프로필
+ Caregiver         : 보호자 계정
+ Alert             : 보호자 알림 (승인 요청 포함)
+
+3.2 GraphEntity 세부 엔티티 라벨  (knowledge_extractor.py)
+---------------------------------------------------------------------------
+ Person, Place, Occupation, Event, Activity, Medication,
+ Food, Routine, HealthCondition, Trait, Item, Media,
+ Preference, Info
+
+3.3 관계(Relationship) 타입
+---------------------------------------------------------------------------
+ HAS_FAMILY, HAD_FRIEND, WORKED_AS, REFLECTS_ON,
+ ENJOYS_ACTIVITY, FROM, TAKES_MEDICATION, PREFERS_FOOD,
+ HAS_ROUTINE, HAS_HEALTH_CONDITION, HAS_PREFERENCE, HAS_INFO
+
+3.4 카테고리 → 라벨/관계 매핑 (승인 시 자동 변환)
+---------------------------------------------------------------------------
+ "가족관계"   → Person          + HAS_FAMILY
+ "직업/경력"  → Occupation      + WORKED_AS
+ "투약 정보"  → Medication      + TAKES_MEDICATION
+ "식사 선호"  → Food            + PREFERS_FOOD
+ "수면 패턴"  → Routine         + HAS_ROUTINE
+ "의료 이력"  → HealthCondition + HAS_HEALTH_CONDITION
+
+3.5 기본 그래프 패턴 (Cypher 예시)
+---------------------------------------------------------------------------
+ (Persona {id:"P001"})
+     -[:HAS_FAMILY]->(GraphEntity {label:"Person", name:"큰딸 수진"})
+         -[:IN_GRAPH]->(Graph {graph_type:"life_memory"})
+
+ (Persona {id:"P001"})
+     -[:TAKES_MEDICATION]->(GraphEntity {label:"Medication",
+                                         name:"아리셉트 5mg",
+                                         schedule:"매일 아침"})
+         -[:IN_GRAPH]->(Graph {graph_type:"daily_care"})
+
+================================================================================
+4. 대화 → KG 자동 구축 파이프라인
+================================================================================
+
+Remini의 KG는 보호자가 직접 입력하는 것뿐 아니라, 환자와의 **대화
+자체로부터 자동으로 성장**한다. 다만 치매 환자 발화는 혼동과 허언
+가능성이 있기 때문에, 단순 자동 삽입은 위험하다. 따라서 다음과 같은
+3단계 LLM 파이프라인 + 보호자 승인 게이트를 설계하였다.
+
+  [환자 발화]
+      │
+      ▼
+  ① 새 정보 감지
+      ai-server/app/services/new_knowledge_detector.py
+      - Ollama(Qwen)에 프롬프트:
+        "이 발화에 기존 KG에 없는 새 정보가 있는가?"
+      - 반환 : NewKnowledgeCandidate(category, content, confidence)
+      - MIN_CONFIDENCE = 0.6 미만이면 즉시 폐기
+      │
+      ▼
+  ② 자연스러운 재확인 (치매 맞춤 UX)
+      ai-server/app/services/knowledge_confirmation.py
+      - confirmation_store에 pending 상태로 저장
+      - 다음 턴의 LLM 응답 생성 시 확인 질문을 자연스럽게 주입
+        예) "아, 큰따님 성함이 수진이였군요?
+             제가 잘 기억해 둘게요, 맞을까요?"
+      - 환자 응답을 check_confirmation()으로 검증
+        (단순 yes/no 아닌 치매 환자 특유의 우회 표현 허용)
+      │
+      ▼
+  ③ 보호자 승인 게이트
+      caregiver/artifacts/api-server/src/routes/pending-knowledge.ts
+      - 확인이 끝나면 AI 서버 → 보호자 API로 webhook 호출
+      - PendingKnowledge 노드 + Alert 노드 생성
+      - 보호자 앱에 "새로 알게 된 정보" 카드로 표시
+      - 보호자 승인 시 :
+          · AI 서버 /extract-knowledge 엔드포인트 호출
+          · LLM이 structured output 생성
+            { entity_label, relationship_type, properties }
+          · Neo4j에 GraphEntity 노드 생성
+          · Persona -[관계]-> GraphEntity 연결
+          · GraphEntity -[:IN_GRAPH]-> Graph 허브 연결
+          · PendingKnowledge.status = "approved"
+      - 보호자 거부 시 :
+          · PendingKnowledge.status = "rejected"
+          · 원 대화 로그에 rejected 플래그 기록 (추후 재학습 방지)
+
+이 "AI가 제안 → 사람이 승인" 구조가 치매 영역에서 본질적인 이유는,
+환자 발화의 신뢰도를 AI 혼자 판단할 수 없기 때문이다. 3단계 안전장치
+(감지 → 재확인 → 보호자 승인)를 통해 오삽입(false positive)을 최소화
+하면서도, 보호자의 수작업 부담은 "승인 버튼 한 번"으로 축소한다.
+
+추가 설정값 (main.py):
+ _KNOWLEDGE_DETECT_MSG_INTERVAL = 1    # 매 메시지마다 감지
+                                       #  (운영 시 3으로 조정 예정)
+ _KNOWLEDGE_DETECT_COOLDOWN_SEC = 10   # 최소 10초 간격
+ MIN_CONFIDENCE                 = 0.6  # confidence < 0.6 이면 폐기
+
+================================================================================
+5. Daily Care vs Life Memory 자동 분류 로직
+================================================================================
+
+auradb_memory.py 와 graphrag_memory.py 에 공통으로 구현된 한국어 힌트
+토큰 규칙을 사용한다. (LLM 호출 비용을 아끼기 위한 1차 필터이며, 2차
+로는 카테고리 라벨 기반 분류가 덧붙는다.)
+
+ _DAILY_HINTS = {"오늘","지금","일정","약","투약","밥","식사",
+                 "산책","잠","자기","취침","루틴","건강","혈압"}
+
+ _LIFE_HINTS  = {"예전","옛날","과거","기억","추억","어릴",
+                 "가족","남편","아내","아버지","어머니","학교",
+                 "친구","여행","결혼"}
+
+ def _query_graph_type(query: str) -> str | None:
+     life_score  = sum(1 for h in _LIFE_HINTS  if h in query)
+     daily_score = sum(1 for h in _DAILY_HINTS if h in query)
+     if life_score  > daily_score : return "life_memory"
+     if daily_score > life_score  : return "daily_care"
+     return None   # 동점이면 상위 로직에서 모드별 budget 사용
+
+저장 시에는 카테고리 라벨을 기반으로 GraphEntity.graph_type 속성을
+부여하고, Cypher 검색 시에는 다음과 같이 필터링한다 :
+
+ WHERE coalesce(n.graph_type, '') CONTAINS $graph_type
+
+================================================================================
+6. KG → 대화 RAG 연동 (3계층 Fallback)
+================================================================================
+
+retrieval.py 의 RetrievalService 는 다음과 같이 3계층 fallback 구조를
+가진다. 실패/빈 결과 시 다음 계층으로 내려간다.
+
+ 1순위 · AuraDB Memory  (auradb_memory.retrieve)
+   - Cypher : Persona 에서 1~2 홉 이내의 GraphEntity 검색
+   - 점수   : lexical_score + graph_type_bonus + mode_bonus
+   - 이웃 노드(neighbors) 함께 반환하여 컨텍스트 풍부화
+   - 모드별 budget 분배 :
+        routine_support  : daily 0.70 / life 0.30
+        memory_support   : daily 0.20 / life 0.80
+        emotion_grounding: daily 0.35 / life 0.65
+        bridge_mode      : daily 0.50 / life 0.50
+
+ 2순위 · Vector RAG      (PostgreSQL + pgvector)
+   - SentenceTransformer(BAAI/bge-m3) 로 임베딩
+   - memory_vectors 테이블에서 코사인 유사도 TOP-K
+
+ 3순위 · Simple JSON 폴백 (memories.json)
+   - 토큰 교집합 기반 단순 점수
+   - 최악의 경우에도 시스템이 멈추지 않도록 보장
+
+검색 결과는 다음과 같은 evidence 문자열로 포맷되어 LLM 프롬프트
+컨텍스트에 주입된다 :
+
+   "Current care facts | Person: 수진 | 큰딸, 부산 거주, 매주 일요일 방문"
+
+이 evidence 조각들이 Qwen 프롬프트의 <context> 블록에 삽입되며,
+safe_reply() 단계에서 최종 답변 생성에 사용된다.
+
+================================================================================
+7. 파일·함수 지도
+================================================================================
+
+ [AI 서버 측]
+ ai-server/app/services/new_knowledge_detector.py
+     detect_new_knowledge()           — LLM 기반 새 정보 감지
+ ai-server/app/services/knowledge_extractor.py
+     extract_structured_knowledge()   — entity/relationship 추출
+ ai-server/app/services/knowledge_confirmation.py
+     check_confirmation()             — 환자 재확인 응답 검증
+ ai-server/app/services/auradb_memory.py
+     retrieve()                       — dual-graph 검색
+     _retrieve_from_graph()           — 개별 그래프 Cypher 쿼리
+     infer_photo_relations()          — 사진↔그래프 노드 연관
+ ai-server/app/services/graphrag_memory.py
+     retrieve()                       — GraphRAG 호환 레거시 경로
+ ai-server/app/services/retrieval.py
+     RetrievalService.retrieve()      — 3계층 fallback RAG
+     save_memory()                    — 메모리 저장 + 임베딩
+ ai-server/app/main.py  (L114-177)
+     _run_knowledge_detection()       — 비차단 백그라운드 태스크
+     _run_confirmation_check()        — 재확인 흐름 호출
+
+ [보호자 API 서버 측]
+ caregiver/artifacts/api-server/src/neo4j.ts
+     getNeo4jDriver()                 — 드라이버 초기화
+     runQuery<T>()                    — 타입세이프 Cypher 실행
+ caregiver/artifacts/api-server/src/routes/pending-knowledge.ts
+     POST /:itemId/approve            — 승인 → GraphEntity 생성
+     POST /:itemId/reject             — 거부 → status 변경
+ caregiver/artifacts/api-server/src/routes/knowledge.ts
+     knowledge CRUD 핸들러
+ caregiver/artifacts/api-server/src/routes/patients.ts
+     POST /link-persona               — 환자와 persona_id 연결
+
+================================================================================
+8. 구현 상태
+================================================================================
+
+ ● 완료 (Production-ready)
+   - Neo4j AuraDB 연결 (Python, Node 양쪽)
+   - LLM 기반 새 정보 감지 → 재확인 → 보호자 승인 전체 파이프라인
+   - GraphEntity CRUD, PendingKnowledge / Alert 연계
+   - Dual-graph 분리 저장 및 모드별 budget RAG
+   - pgvector 임베딩 백업 경로
+   - 사진 메모리와 그래프 노드 연관 추론 (infer_photo_relations)
+   - 한국어 힌트 기반 그래프 타입 자동 분류
+
+ ◐ 진행중
+   - Graph 허브 노드 자동 초기화 스크립트 (현재 수동 Cypher)
+   - AI 서버 = 읽기 전용, 쓰기는 caregiver API 경유 — 이 경계를
+     이벤트 큐로 정리 중
+   - GraphRAG 레거시 CSV 경로 정리 및 AuraDB 일원화
+   - 운영 모드용 감지 간격(MSG_INTERVAL=3) 튜닝
+
+ ○ 미착수
+   - 관계 자동 추론 (기존 노드 간 새 edge 자동 생성)
+   - Temporal 질의 ("지난주에 말씀하신…")
+   - 보호자 앱 그래프 시각화 뷰어 (Neo4j Bloom 대체 UI)
+   - 대규모 KG에서의 Cypher 쿼리 성능 튜닝 / 인덱스 설계
+   - 다중 환자(Persona multi-tenant) 격리 정책 강화
+
+================================================================================
+9. 시행착오 기록
+================================================================================
+
+ (1) 초기에는 LangChain GraphRAG 예제를 그대로 사용하려 했으나,
+     한국어 엔티티 추출 정확도가 너무 낮아 자체 프롬프트로 재작성.
+
+ (2) 단일 Graph 라벨로 시작했다가, routine vs memory 검색이 서로
+     간섭하는 문제가 생겨 Graph 허브 노드 + graph_type 속성으로 분리.
+
+ (3) 감지 → 즉시 삽입 방식으로 만들었더니 환자의 혼잣말/허언이
+     그대로 KG에 박혔다. → 재확인 단계 + 보호자 승인 게이트 추가.
+
+ (4) AuraDB Free Tier에서 커넥션 수 제한에 걸려, 드라이버 싱글톤 +
+     쿼리 재사용 패턴으로 리팩터.
+
+ (5) 한국어 lexical 매칭 실패 사례가 많아, 힌트 토큰 사전을 수작업
+     보강. 장기적으로는 형태소 분석기(Mecab) 도입 검토.
+
+ (6) AI 서버가 Neo4j에 직접 쓰면 트랜잭션이 분산되어 보호자 앱의
+     승인 흐름과 충돌. → AI는 읽기 전용, 쓰기는 API 서버 일원화.
+
+================================================================================
+10. 향후 과업
+================================================================================
+
+ P0 (필수)
+  - Graph 허브 노드 자동 초기화 스크립트 및 마이그레이션
+  - 승인 거부된 지식의 재감지 방지 로직
+  - persona_id 다중 환자 분리 검증
+
+ P1 (중요)
+  - Temporal 속성(created_at / observed_at) 기반 시간 질의
+  - 관계 자동 추론 (예: Person A·B가 같은 Event를 공유 → KNOWS)
+  - 보호자 앱 그래프 시각화 뷰 (React Flow 기반 검토)
+
+ P2 (여유 되면)
+  - Cypher 쿼리 인덱스/프로파일링
+  - Mecab 형태소 분석기 통합
+  - 팀 자체 Planning Agent 와 KG 결합 (DEMENTIA-PLAN 대체 설계)
+
+================================================================================
+작성 : MemorIE 팀 · Remini 프로젝트
+문서 버전 : v1.0
+================================================================================

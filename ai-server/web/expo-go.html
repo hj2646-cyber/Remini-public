@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Expo Go 접속</title>
+    <style>
+      body { font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", sans-serif;
+             background: #0f172a; color: #f1f5f9; min-height: 100vh; margin: 0;
+             display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; padding: 24px; }
+      h1 { margin: 0; font-size: 22px; }
+      .url { background: #1e293b; padding: 10px 16px; border-radius: 8px; font-family: monospace; font-size: 16px; }
+      #qr { background: #fff; padding: 16px; border-radius: 12px; }
+      .hint { font-size: 14px; opacity: 0.75; text-align: center; max-width: 420px; line-height: 1.55; }
+      a { color: #93c5fd; }
+    </style>
+  </head>
+  <body>
+    <h1>보호자 앱 — Expo Go 접속</h1>
+    <div class="url">exp://<SERVER_IP>:8081</div>
+    <div id="qr"></div>
+    <div class="hint">
+      휴대폰에 <b>Expo Go</b> 설치 → 같은 WiFi(10.125.62.x) 연결 →
+      앱에서 <b>Enter URL manually</b>로 위 주소 입력하거나 이 QR 스캔.
+    </div>
+    <script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs/qrcode.min.js"></script>
+    <script>
+      new QRCode(document.getElementById("qr"), {
+        text: "exp://<SERVER_IP>:8081",
+        width: 260, height: 260,
+        colorDark: "#000", colorLight: "#fff",
+        correctLevel: QRCode.CorrectLevel.M,
+      });
+    </script>
+  </body>
+</html>

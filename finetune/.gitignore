@@ -1,0 +1,21 @@
+# LoRA 체크포인트 / 병합 GGUF — 매우 큼 (수 GB)
+checkpoints/
+*.gguf
+*.safetensors
+*.bin
+
+# 학습 데이터 — PII (환자 대화) 포함, 검수 후 결정
+data/pairs/*.jsonl
+data/pairs/_dropped.jsonl
+data/pairs/review_sheet.csv
+!data/pairs/REVIEW_GUIDE.md
+
+# train/val/test split — 학습 데이터에서 파생
+data/splits/
+
+# 학습 venv (별도)
+.venv/
+
+# Python
+__pycache__/
+*.pyc

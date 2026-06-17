@@ -1,0 +1,196 @@
+{
+  "A_일상잡담": {
+    "desc": "회상 신호 없는 평범한 일상 대화. before가 회상으로 끌고 가는지 / after가 일상에 머무는지.",
+    "before": [
+      {
+        "turn": 1,
+        "user": "오늘 점심에 김치찌개 먹었어",
+        "label": "일상확인형",
+        "phase": "OPENING",
+        "remin_trigger": "-",
+        "reply": "김치찌개 드셨군요. 보글보글 끓는 소리가 여기까지 들리는 것 같아요. 어떤 맛이 나셨어요?",
+        "markers": 0,
+        "questions": 1
+      },
+      {
+        "turn": 2,
+        "user": "날씨가 쌀쌀하니까 따뜻한 게 좋더라고",
+        "label": "일상확인형",
+        "phase": "OPENING",
+        "remin_trigger": "-",
+        "reply": "따뜻한 국물이 생각나시는 날씨네요. 예전에 쌀쌀한 날에 드셨던 음식 중에 특히 좋아하시던 게 있으세요?",
+        "markers": 1,
+        "questions": 1
+      },
+      {
+        "turn": 3,
+        "user": "텔레비전 켜니까 트로트가 나오더라",
+        "label": "일상확인형",
+        "phase": "EXPLORATION",
+        "remin_trigger": "-",
+        "reply": "트로트 음악이 흐르는군요. 어떤 노래가 나오고 있었어요?",
+        "markers": 0,
+        "questions": 1
+      },
+      {
+        "turn": 4,
+        "user": "그냥 집에서 푹 쉬었지 뭐",
+        "label": "일상확인형",
+        "phase": "EXPLORATION",
+        "remin_trigger": "prompt",
+        "reply": "집에서 편히 쉬시는 게 최고지요. \n\n혹시 옛날 추억 사진을 같이 보면서 이야기 좀 나눠볼까요? 떠오르는 추억 같이 나누면 재밌을 것 같아요.",
+        "markers": 4,
+        "questions": 1
+      },
+      {
+        "turn": 5,
+        "user": "응 별일 없었어",
+        "label": "일상확인형",
+        "phase": "EXPLORATION",
+        "remin_trigger": "start",
+        "reply": "네, 편안하게 쉬신 게 제일이지요.\n\n잠깐, 이 사진 한번 같이 볼까요? 팔씨름 해보셨어요?",
+        "markers": 1,
+        "questions": 2
+      },
+      {
+        "turn": 6,
+        "user": "그러게 말이야",
+        "label": "일상확인형",
+        "phase": "EXPLORATION",
+        "remin_trigger": "-",
+        "reply": "팔씨름 하실 때 손에 힘이 꽉 들어가던 그 느낌, 기억나세요?",
+        "markers": 0,
+        "questions": 1
+      }
+    ],
+    "after": [
+      {
+        "turn": 1,
+        "user": "오늘 점심에 김치찌개 먹었어",
+        "label": "일상확인형",
+        "phase": "OPENING",
+        "remin_trigger": "-",
+        "reply": "김치찌개 드셨군요! 보글보글 끓인 찌개 맛이 참 좋았겠어요. 어떤 김치찌개를 제일 좋아하세요?",
+        "markers": 0,
+        "questions": 1
+      },
+      {
+        "turn": 2,
+        "user": "날씨가 쌀쌀하니까 따뜻한 게 좋더라고",
+        "label": "일상확인형",
+        "phase": "OPENING",
+        "remin_trigger": "-",
+        "reply": "따뜻한 국물이 생각나셨군요. 찌개 드시고 나니 마음까지 든든해지셨을 것 같아요.",
+        "markers": 0,
+        "questions": 0
+      },
+      {
+        "turn": 3,
+        "user": "텔레비전 켜니까 트로트가 나오더라",
+        "label": "일상확인형",
+        "phase": "OPENING",
+        "remin_trigger": "-",
+        "reply": "트로트 노래가 흘러나왔군요. 어떤 노래가 나왔는지 기억나세요?",
+        "markers": 0,
+        "questions": 1
+      },
+      {
+        "turn": 4,
+        "user": "그냥 집에서 푹 쉬었지 뭐",
+        "label": "일상확인형",
+        "phase": "OPENING",
+        "remin_trigger": "-",
+        "reply": "집에서 편히 쉬시는 게 최고지요. 오늘 하루 마음 편안하게 보내신 것 같아 저도 기분이 좋네요.",
+        "markers": 0,
+        "questions": 0
+      },
+      {
+        "turn": 5,
+        "user": "응 별일 없었어",
+        "label": "일상확인형",
+        "phase": "EXPLORATION",
+        "remin_trigger": "-",
+        "reply": "별일 없이 평온한 하루를 보내셨군요. 다행이에요. 지금은 창밖 풍경이 어떤 모습인가요?",
+        "markers": 0,
+        "questions": 1
+      },
+      {
+        "turn": 6,
+        "user": "그러게 말이야",
+        "label": "일상확인형",
+        "phase": "EXPLORATION",
+        "remin_trigger": "prompt",
+        "reply": "그렇지요. 가끔은 이렇게 조용히 쉬는 시간이 참 소중하더라고요.\n\n혹시 예전 추억이 담긴 사진들을 같이 보면서 이야기 나눠볼까요? 함께 보시면 더 즐거우실 것 같아요.",
+        "markers": 3,
+        "questions": 1
+      }
+    ]
+  },
+  "B_회상신호": {
+    "desc": "환자가 먼저 옛 기억을 꺼냄. after가 회상을 죽인 게 아니라 PULL(따라가기)은 유지함을 증명.",
+    "before": [
+      {
+        "turn": 1,
+        "user": "옛날에 우리 어머니가 김치찌개를 참 맛있게 끓이셨는데",
+        "label": "회상유도형",
+        "phase": "EXPLORATION",
+        "remin_trigger": "-",
+        "reply": "어머니 손맛이 정말 좋으셨나 봐요. 찌개 끓일 때 어떤 냄새가 났는지 기억나세요?",
+        "markers": 0,
+        "questions": 1
+      },
+      {
+        "turn": 2,
+        "user": "큰 가마솥에다가 푹 끓이셨어",
+        "label": "일상확인형",
+        "phase": "EXPLORATION",
+        "remin_trigger": "-",
+        "reply": "가마솥에 푹 끓이셨군요. 보글보글 소리도 참 컸을 것 같아요. 그 찌개 맛은 어떠셨어요?",
+        "markers": 0,
+        "questions": 1
+      },
+      {
+        "turn": 3,
+        "user": "그땐 식구가 많아서 늘 북적북적했지",
+        "label": "회상유도형",
+        "phase": "EXPLORATION",
+        "remin_trigger": "-",
+        "reply": "북적북적한 분위기가 참 정겨우셨겠어요. 식구들이 다 같이 둘러앉아 드실 때면 어떤 기분이 드셨나요?",
+        "markers": 0,
+        "questions": 1
+      }
+    ],
+    "after": [
+      {
+        "turn": 1,
+        "user": "옛날에 우리 어머니가 김치찌개를 참 맛있게 끓이셨는데",
+        "label": "회상유도형",
+        "phase": "EXPLORATION",
+        "remin_trigger": "-",
+        "reply": "어머니 손맛이 정말 좋으셨나 봐요. 그 찌개 냄새가 여기까지 나는 것 같아요. 어떤 맛이 가장 기억에 남으세요?",
+        "markers": 0,
+        "questions": 1
+      },
+      {
+        "turn": 2,
+        "user": "큰 가마솥에다가 푹 끓이셨어",
+        "label": "일상확인형",
+        "phase": "EXPLORATION",
+        "remin_trigger": "-",
+        "reply": "가마솥에 푹 끓이셨군요. 역시 가마솥에 끓여야 제맛이 나죠. 그 솥뚜껑이 들썩거릴 때 어떤 소리가 났을까요?",
+        "markers": 0,
+        "questions": 1
+      },
+      {
+        "turn": 3,
+        "user": "그땐 식구가 많아서 늘 북적북적했지",
+        "label": "회상유도형",
+        "phase": "EXPLORATION",
+        "remin_trigger": "-",
+        "reply": "북적북적한 분위기가 참 정겨우셨겠어요. 식구들이 다 같이 둘러앉아 드시면 정말 든든하셨을 것 같아요.",
+        "markers": 0,
+        "questions": 0
+      }
+    ]
+  }
+}

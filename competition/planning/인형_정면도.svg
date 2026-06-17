@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 480" width="320" height="480">
+  <style>
+    .body-fill { fill: #f4e4c1; stroke: #8B6F47; stroke-width: 1.5; }
+    .cutout { fill: #1a1a1a; stroke: #0066cc; stroke-width: 1.5; stroke-dasharray: 3,2; }
+    .dimension { font-family: sans-serif; font-size: 9px; fill: #cc0000; }
+    .label { font-family: sans-serif; font-size: 8px; fill: #fff; }
+    .label-out { font-family: sans-serif; font-size: 9px; fill: #000; }
+  </style>
+
+  <!-- Title -->
+  <text x="160" y="15" text-anchor="middle" font-family="sans-serif" font-size="12" font-weight="bold">Remini 인형 정면도 (40cm 곰돌이)</text>
+
+  <!-- 귀 (지름 6cm = 약 48px 기준 1cm=8px) -->
+  <circle cx="90" cy="55" r="24" class="body-fill"/>
+  <circle cx="230" cy="55" r="24" class="body-fill"/>
+  <text x="60" y="50" class="label-out">귀 φ6cm</text>
+
+  <!-- 머리 (24x20cm) -->
+  <rect x="48" y="50" width="224" height="180" rx="50" class="body-fill"/>
+  <text x="160" y="245" text-anchor="middle" class="dimension">머리 24cm × 20cm</text>
+
+  <!-- 디스플레이 절개부 (16x9cm) -->
+  <rect x="96" y="100" width="128" height="72" class="cutout"/>
+  <text x="160" y="140" text-anchor="middle" class="label">7" LCD</text>
+  <text x="160" y="152" text-anchor="middle" class="label">16cm × 9cm</text>
+
+  <!-- 카메라 절개부 (φ20mm = 16px) -->
+  <circle cx="160" cy="195" r="8" class="cutout"/>
+  <text x="180" y="198" class="label-out">카메라 φ2cm</text>
+
+  <!-- 마이크 절개부 (4mm × 4개) -->
+  <g transform="translate(146, 215)">
+    <circle cx="0" cy="0" r="1.5" fill="#333"/>
+    <circle cx="6" cy="0" r="1.5" fill="#333"/>
+    <circle cx="12" cy="0" r="1.5" fill="#333"/>
+    <circle cx="18" cy="0" r="1.5" fill="#333"/>
+    <circle cx="24" cy="0" r="1.5" fill="#333"/>
+  </g>
+  <text x="200" y="218" class="label-out">마이크 φ4mm × 5</text>
+
+  <!-- 팔 -->
+  <ellipse cx="40" cy="300" rx="22" ry="55" class="body-fill"/>
+  <ellipse cx="280" cy="300" rx="22" ry="55" class="body-fill"/>
+
+  <!-- 몸 (22x18cm) -->
+  <ellipse cx="160" cy="310" rx="88" ry="75" class="body-fill"/>
+  <text x="160" y="395" text-anchor="middle" class="dimension">몸 22cm × 18cm</text>
+
+  <!-- 스피커 그릴 (φ50mm = 40px) -->
+  <circle cx="160" cy="305" r="20" class="cutout"/>
+  <text x="160" y="308" text-anchor="middle" class="label">스피커</text>
+  <text x="160" y="318" text-anchor="middle" class="label">φ5cm</text>
+
+  <!-- 다리 -->
+  <rect x="115" y="378" width="36" height="56" rx="16" class="body-fill"/>
+  <rect x="170" y="378" width="36" height="56" rx="16" class="body-fill"/>
+
+  <!-- 치수 가이드 화살표 (전체 높이) -->
+  <line x1="20" y1="50" x2="20" y2="430" stroke="#cc0000" stroke-width="0.5"/>
+  <line x1="15" y1="50" x2="25" y2="50" stroke="#cc0000" stroke-width="1"/>
+  <line x1="15" y1="430" x2="25" y2="430" stroke="#cc0000" stroke-width="1"/>
+  <text x="10" y="245" class="dimension" transform="rotate(-90, 10, 245)">전체 40cm</text>
+
+  <!-- 범례 -->
+  <text x="160" y="455" text-anchor="middle" class="label-out">━━ 외형 / ┄┄ 절개부(디스플레이/카메라/스피커/마이크)</text>
+  <text x="160" y="470" text-anchor="middle" class="label-out">단위: cm (1cm = 8px)</text>
+</svg>

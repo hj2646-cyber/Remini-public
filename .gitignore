@@ -1,0 +1,112 @@
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+
+# Node
+node_modules/
+dist/
+.expo/
+*.tsbuildinfo
+.cache/
+
+# Data (large/generated) — 환자 PII 포함
+ai-server/data/session_logs.ndjson
+ai-server/data/conversations.db
+ai-server/data/uploads/
+ai-server/data/memory_photos/
+ai-server/data/voice_profiles/
+ai-server/data/patient_voice/
+ai-server/data/memories.json
+ai-server/data/memories.json.broken.*.bak
+ai-server/data/avoidance.db
+ai-server/data/reminiscence_photos/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+/tmp/
+
+# Build artifacts
+caregiver/artifacts/caregiver-app/static-build/
+
+# Patient conversation logs (PII — never commit)
+대화로그_*.txt
+/tmp_logs/
+
+# Large model weights (ONNX/PT 등) — GitHub 100MB 초과
+ai-server/models/
+*.onnx
+*.safetensors
+*.bin
+*.gguf
+*.pt
+
+# Fine-tune 학습 산출물 (재생성 가능, 큰 파일)
+finetune/.venv/
+finetune/checkpoints/
+finetune/logs/
+finetune/data/aihub_71703/Training/
+finetune/data/aihub_71703/Validation/
+finetune/data/aihub_71703/training/
+finetune/data/aihub_71703/validation/
+finetune/data/aihub_71703/Sublabel/
+finetune/data/aihub_71703/sublabel/
+finetune/data/aihub_71703/_sample/
+finetune/data/aihub_71703/utterances.jsonl
+finetune/data/aihub_71703/_stats.json
+finetune/data/v2/pairs_*.jsonl
+finetune/data/v2/stage1_pairs.jsonl
+finetune/data/raw/
+finetune/data/pairs/raw_*.jsonl
+finetune/data/pairs/reviewed_merged.jsonl
+finetune/data/splits/
+finetune/data/stage1/
+finetune/data/comparison/
+
+# Unsloth 자동 컴파일 캐시
+unsloth_compiled_cache/
+
+# experiments — large generated data
+experiments/.venv/
+experiments/results/
+experiments/cache/
+
+# 한글 파일 (한컴 .hwp 등 binary)
+*.hwp
+*.hwpx
+
+# Claude Code 로컬 설정
+.claude/
+
+# 잘못된 위치의 SQLite (PII)
+ai-server/conversations.db
+
+# 책 PDF·OCR 본문 (저작권)
+docs/wiki/_raw/
+docs/KCI_FI001501022.pdf
+docs/전문가 평가용_설문조사.docx
+finetune/data/v2/book_extracts/
+finetune/data/v2/utterances_v2.jsonl
+finetune/data/v2/utterances_v2_buggy_*.jsonl
+finetune/data/v2/SEED_TEMPLATE.csv
+
+# 외부 코퍼스 (라이선스 미확인)
+finetune/data/external/
+fish-speech-server/

@@ -1,0 +1,39 @@
+{
+  "name": "@workspace/patient-web",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0 --port 8083",
+    "build": "vite build",
+    "preview": "vite preview --host 0.0.0.0 --port 8083",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@capacitor/android": "^7.6.2",
+    "@capacitor/cli": "^7.6.2",
+    "@capacitor/core": "^7.6.2",
+    "@capacitor/ios": "^7.6.2",
+    "@capacitor/screen-orientation": "^7.0.4",
+    "@capacitor/status-bar": "^7.0.6",
+    "@livekit/components-react": "^2.9.20",
+    "class-variance-authority": "catalog:",
+    "clsx": "catalog:",
+    "livekit-client": "^2.18.1",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "tailwind-merge": "catalog:",
+    "three": "^0.160.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "catalog:",
+    "@types/node": "catalog:",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "@types/three": "^0.160.0",
+    "@vitejs/plugin-react": "catalog:",
+    "tailwindcss": "catalog:",
+    "typescript": "~5.9.2",
+    "vite": "catalog:"
+  }
+}

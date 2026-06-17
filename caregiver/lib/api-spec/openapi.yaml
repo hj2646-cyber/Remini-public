@@ -1,0 +1,785 @@
+openapi: 3.1.0
+info:
+  title: Api
+  version: 0.1.0
+  description: Caregiver Monitoring App API for dementia patient care
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: patients
+    description: Patient management
+  - name: conversations
+    description: Patient-LLM conversation history
+  - name: feedback
+    description: Caregiver feedback on conversations
+  - name: knowledge
+    description: Knowledge graph management
+  - name: alerts
+    description: Emergency alerts
+
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /patients:
+    get:
+      operationId: listPatients
+      tags: [patients]
+      summary: List all patients
+      responses:
+        "200":
+          description: List of patients
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Patient"
+    post:
+      operationId: createPatient
+      tags: [patients]
+      summary: Create a patient
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreatePatientRequest"
+      responses:
+        "201":
+          description: Patient created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Patient"
+
+  /patients/{patientId}:
+    get:
+      operationId: getPatient
+      tags: [patients]
+      summary: Get patient details
+      parameters:
+        - name: patientId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Patient details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Patient"
+    patch:
+      operationId: updatePatient
+      tags: [patients]
+      summary: Update patient
+      parameters:
+        - name: patientId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdatePatientRequest"
+      responses:
+        "200":
+          description: Patient updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Patient"
+
+  /patients/{patientId}/conversations:
+    get:
+      operationId: listConversations
+      tags: [conversations]
+      summary: List conversations for a patient
+      parameters:
+        - name: patientId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        "200":
+          description: List of conversations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Conversation"
+    post:
+      operationId: createConversation
+      tags: [conversations]
+      summary: Create a new conversation session
+      parameters:
+        - name: patientId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateConversationRequest"
+      responses:
+        "201":
+          description: Conversation created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Conversation"
+
+  /patients/{patientId}/conversations/{conversationId}:
+    get:
+      operationId: getConversation
+      tags: [conversations]
+      summary: Get a specific conversation with messages
+      parameters:
+        - name: patientId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: conversationId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Conversation with messages
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConversationWithMessages"
+
+  /patients/{patientId}/conversations/{conversationId}/messages:
+    post:
+      operationId: addMessage
+      tags: [conversations]
+      summary: Add a message to a conversation
+      parameters:
+        - name: patientId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: conversationId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateMessageRequest"
+      responses:
+        "201":
+          description: Message added
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+
+  /patients/{patientId}/conversations/{conversationId}/feedback:
+    post:
+      operationId: submitFeedback
+      tags: [feedback]
+      summary: Submit caregiver feedback for a conversation
+      parameters:
+        - name: patientId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: conversationId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateFeedbackRequest"
+      responses:
+        "201":
+          description: Feedback submitted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Feedback"
+
+  /patients/{patientId}/knowledge:
+    get:
+      operationId: listKnowledgeItems
+      tags: [knowledge]
+      summary: List knowledge graph items for a patient
+      parameters:
+        - name: patientId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [life_memory, daily_care]
+      responses:
+        "200":
+          description: Knowledge items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/KnowledgeItem"
+    post:
+      operationId: createKnowledgeItem
+      tags: [knowledge]
+      summary: Add knowledge item
+      parameters:
+        - name: patientId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateKnowledgeItemRequest"
+      responses:
+        "201":
+          description: Knowledge item created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KnowledgeItem"
+
+  /patients/{patientId}/knowledge/{itemId}:
+    patch:
+      operationId: updateKnowledgeItem
+      tags: [knowledge]
+      summary: Update knowledge item
+      parameters:
+        - name: patientId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateKnowledgeItemRequest"
+      responses:
+        "200":
+          description: Knowledge item updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KnowledgeItem"
+    delete:
+      operationId: deleteKnowledgeItem
+      tags: [knowledge]
+      summary: Delete knowledge item
+      parameters:
+        - name: patientId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /patients/{patientId}/alerts:
+    get:
+      operationId: listAlerts
+      tags: [alerts]
+      summary: List emergency alerts for a patient
+      parameters:
+        - name: patientId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: unreadOnly
+          in: query
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: List of alerts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Alert"
+    post:
+      operationId: createAlert
+      tags: [alerts]
+      summary: Create an emergency alert
+      parameters:
+        - name: patientId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateAlertRequest"
+      responses:
+        "201":
+          description: Alert created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Alert"
+
+  /patients/{patientId}/alerts/{alertId}/read:
+    patch:
+      operationId: markAlertRead
+      tags: [alerts]
+      summary: Mark alert as read
+      parameters:
+        - name: patientId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: alertId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Alert marked as read
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Alert"
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+
+    Patient:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        birthYear:
+          type: integer
+        diagnosis:
+          type: string
+        caregiverName:
+          type: string
+        status:
+          type: string
+          enum: [stable, attention, emergency]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - birthYear
+        - diagnosis
+        - caregiverName
+        - status
+        - createdAt
+        - updatedAt
+
+    CreatePatientRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        birthYear:
+          type: integer
+        diagnosis:
+          type: string
+        caregiverName:
+          type: string
+      required:
+        - name
+        - birthYear
+        - diagnosis
+        - caregiverName
+
+    UpdatePatientRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        birthYear:
+          type: integer
+        diagnosis:
+          type: string
+        caregiverName:
+          type: string
+        status:
+          type: string
+          enum: [stable, attention, emergency]
+
+    Conversation:
+      type: object
+      properties:
+        id:
+          type: integer
+        patientId:
+          type: integer
+        sessionDate:
+          type: string
+          format: date-time
+        summary:
+          type: string
+          nullable: true
+        feedbackSubmitted:
+          type: boolean
+        messageCount:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - patientId
+        - sessionDate
+        - feedbackSubmitted
+        - messageCount
+        - createdAt
+
+    CreateConversationRequest:
+      type: object
+      properties:
+        sessionDate:
+          type: string
+          format: date-time
+        summary:
+          type: string
+          nullable: true
+
+    ConversationWithMessages:
+      type: object
+      properties:
+        id:
+          type: integer
+        patientId:
+          type: integer
+        sessionDate:
+          type: string
+          format: date-time
+        summary:
+          type: string
+          nullable: true
+        feedbackSubmitted:
+          type: boolean
+        messageCount:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        messages:
+          type: array
+          items:
+            $ref: "#/components/schemas/Message"
+        feedback:
+          nullable: true
+          $ref: "#/components/schemas/Feedback"
+      required:
+        - id
+        - patientId
+        - sessionDate
+        - feedbackSubmitted
+        - messageCount
+        - createdAt
+        - messages
+
+    Message:
+      type: object
+      properties:
+        id:
+          type: integer
+        conversationId:
+          type: integer
+        role:
+          type: string
+          enum: [patient, assistant]
+        content:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+      required:
+        - id
+        - conversationId
+        - role
+        - content
+        - timestamp
+
+    CreateMessageRequest:
+      type: object
+      properties:
+        role:
+          type: string
+          enum: [patient, assistant]
+        content:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+      required:
+        - role
+        - content
+
+    Feedback:
+      type: object
+      properties:
+        id:
+          type: integer
+        conversationId:
+          type: integer
+        satisfaction:
+          type: string
+          enum: [satisfied, unsatisfied]
+        topicRelevance:
+          type: integer
+          minimum: 1
+          maximum: 5
+        toneAppropriate:
+          type: integer
+          minimum: 1
+          maximum: 5
+        memoryAccuracy:
+          type: integer
+          minimum: 1
+          maximum: 5
+        comments:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - conversationId
+        - satisfaction
+        - topicRelevance
+        - toneAppropriate
+        - memoryAccuracy
+        - createdAt
+
+    CreateFeedbackRequest:
+      type: object
+      properties:
+        satisfaction:
+          type: string
+          enum: [satisfied, unsatisfied]
+        topicRelevance:
+          type: integer
+          minimum: 1
+          maximum: 5
+        toneAppropriate:
+          type: integer
+          minimum: 1
+          maximum: 5
+        memoryAccuracy:
+          type: integer
+          minimum: 1
+          maximum: 5
+        comments:
+          type: string
+          nullable: true
+      required:
+        - satisfaction
+        - topicRelevance
+        - toneAppropriate
+        - memoryAccuracy
+
+    KnowledgeItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        patientId:
+          type: integer
+        type:
+          type: string
+          enum: [life_memory, daily_care]
+        category:
+          type: string
+        title:
+          type: string
+        content:
+          type: string
+        period:
+          type: string
+          nullable: true
+        importance:
+          type: integer
+          minimum: 1
+          maximum: 3
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - patientId
+        - type
+        - category
+        - title
+        - content
+        - importance
+        - createdAt
+        - updatedAt
+
+    CreateKnowledgeItemRequest:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [life_memory, daily_care]
+        category:
+          type: string
+        title:
+          type: string
+        content:
+          type: string
+        period:
+          type: string
+          nullable: true
+        importance:
+          type: integer
+          minimum: 1
+          maximum: 3
+          default: 1
+      required:
+        - type
+        - category
+        - title
+        - content
+
+    UpdateKnowledgeItemRequest:
+      type: object
+      properties:
+        category:
+          type: string
+        title:
+          type: string
+        content:
+          type: string
+        period:
+          type: string
+          nullable: true
+        importance:
+          type: integer
+          minimum: 1
+          maximum: 3
+
+    Alert:
+      type: object
+      properties:
+        id:
+          type: integer
+        patientId:
+          type: integer
+        level:
+          type: string
+          enum: [info, warning, emergency]
+        message:
+          type: string
+        isRead:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - patientId
+        - level
+        - message
+        - isRead
+        - createdAt
+
+    CreateAlertRequest:
+      type: object
+      properties:
+        level:
+          type: string
+          enum: [info, warning, emergency]
+        message:
+          type: string
+      required:
+        - level
+        - message

@@ -1,0 +1,7 @@
+# 시연 실행 시 동적 생성되는 파일
+logs/
+ai-server/web/ui-config.js
+
+# Python
+__pycache__/
+*.pyc

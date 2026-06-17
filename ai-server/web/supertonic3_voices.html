@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Supertonic 3 — Voice 비교</title>
+<style>
+  :root {
+    --bg: #0f1115;
+    --panel: #1a1d24;
+    --text: #e6e8eb;
+    --muted: #8b919e;
+    --accent: #4c8bf5;
+    --pick: #2a3a2a;
+    --female: #e879c5;
+    --male: #6ec3f4;
+    --border: #2a2e38;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 32px 16px;
+    background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans KR", sans-serif;
+    line-height: 1.5;
+  }
+  .wrap { max-width: 1100px; margin: 0 auto; }
+  h1 { margin: 0 0 8px; font-size: 22px; }
+  .sub { color: var(--muted); margin-bottom: 24px; font-size: 14px; }
+  .sub code { background: var(--panel); padding: 2px 6px; border-radius: 4px; }
+  .legend { display: flex; gap: 16px; font-size: 13px; color: var(--muted); margin-bottom: 16px; flex-wrap: wrap; }
+  .legend strong { color: var(--text); }
+  table { width: 100%; border-collapse: collapse; background: var(--panel); border-radius: 8px; overflow: hidden; }
+  th, td { padding: 14px 12px; text-align: left; border-bottom: 1px solid var(--border); }
+  th { background: #14171d; color: var(--muted); font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; }
+  tr:last-child td { border-bottom: none; }
+  tr.picked { background: var(--pick); }
+  tr.divider td { background: #14171d; color: var(--muted); font-size: 12px; padding: 8px 12px; }
+  audio { width: 100%; max-width: 320px; height: 36px; }
+  .voice-label { font-family: ui-monospace, "JetBrains Mono", Menlo, monospace; font-size: 16px; font-weight: 600; }
+  .voice-label.f { color: var(--female); }
+  .voice-label.m { color: var(--male); }
+  button.pick {
+    background: transparent; color: var(--accent); border: 1px solid var(--accent);
+    padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 13px;
+    transition: background 0.15s;
+  }
+  button.pick:hover { background: rgba(76,139,245,0.1); }
+  tr.picked button.pick { background: var(--accent); color: white; border-color: var(--accent); }
+  .footer {
+    margin-top: 32px; padding: 16px; background: var(--panel); border-radius: 8px;
+    border: 1px solid var(--border); font-size: 14px;
+  }
+  .footer.empty { color: var(--muted); }
+  .footer code { background: #0a0c10; padding: 8px 12px; border-radius: 4px; display: block; margin-top: 8px; font-family: ui-monospace, monospace; color: #b5e48c; overflow-x: auto; white-space: pre-wrap; word-break: break-all; }
+  .copy-hint { color: var(--muted); font-size: 12px; margin-top: 6px; }
+  .tabs { display: flex; gap: 4px; margin-bottom: 16px; }
+  .tabs button { background: var(--panel); color: var(--muted); border: 1px solid var(--border); padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+  .tabs button.active { background: var(--accent); color: white; border-color: var(--accent); }
+  .quick-pick { display: inline-block; margin-left: 12px; font-size: 12px; color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🎤 Supertonic 3 — Voice 비교 (한국어)</h1>
+  <div class="sub">
+    10개 voice (여 5 + 남 5) 동일 텍스트 합성. 마음에 드는 voice 의 <strong>"이 voice 선택"</strong> 클릭 → 하단에 적용 방법 표시.
+    <span class="quick-pick">환자 UI 우측상단 picker 에서 즉시 변경도 가능 (재시작 X).</span>
+  </div>
+  <div class="legend">
+    <span><strong>short</strong>: "안녕하세요. 오늘 기분이 어떠세요?"</span>
+    <span><strong>medium</strong>: "오늘 점심에 뭐 드셨어요? 옛날에 어머니가 해주시던 김치찌개가 갑자기 생각나네요."</span>
+  </div>
+
+  <table>
+    <thead>
+      <tr><th>Voice</th><th>Short</th><th>Medium</th><th></th></tr>
+    </thead>
+    <tbody id="rows"></tbody>
+  </table>
+
+  <div class="footer empty" id="footer">
+    아직 선택 안 함 — 음성 듣고 마음에 드는 voice 의 "이 voice 선택" 버튼 클릭.
+  </div>
+</div>
+
+<script>
+const VOICES = [
+  { id: 'F1', kind: 'f' }, { id: 'F2', kind: 'f' }, { id: 'F3', kind: 'f' },
+  { id: 'F4', kind: 'f' }, { id: 'F5', kind: 'f' },
+  { id: 'M1', kind: 'm' }, { id: 'M2', kind: 'm' }, { id: 'M3', kind: 'm' },
+  { id: 'M4', kind: 'm' }, { id: 'M5', kind: 'm' },
+];
+const tbody = document.getElementById('rows');
+const footer = document.getElementById('footer');
+
+let lastKind = null;
+VOICES.forEach(v => {
+  if (lastKind !== v.kind) {
+    const div = document.createElement('tr');
+    div.className = 'divider';
+    div.innerHTML = `<td colspan="4">${v.kind === 'f' ? '👩 여성 (Female)' : '👨 남성 (Male)'}</td>`;
+    tbody.appendChild(div);
+    lastKind = v.kind;
+  }
+  const tr = document.createElement('tr');
+  tr.dataset.voice = v.id;
+  tr.innerHTML = `
+    <td><span class="voice-label ${v.kind}">${v.id}</span></td>
+    <td><audio controls preload="none" src="/static/supertonic3_voices/${v.id}_short.wav"></audio></td>
+    <td><audio controls preload="none" src="/static/supertonic3_voices/${v.id}_medium.wav"></audio></td>
+    <td><button class="pick" data-voice="${v.id}">이 voice 선택</button></td>
+  `;
+  tbody.appendChild(tr);
+});
+
+tbody.addEventListener('click', e => {
+  if (!e.target.matches('button.pick')) return;
+  const voice = e.target.dataset.voice;
+  document.querySelectorAll('tr.picked').forEach(tr => tr.classList.remove('picked'));
+  e.target.closest('tr').classList.add('picked');
+  footer.classList.remove('empty');
+  footer.innerHTML = `
+    <strong>선택: ${voice}</strong>
+    <div class="copy-hint">방법 A — 환자 UI 우측상단 picker 에서 <code style="display:inline">${voice}</code> 선택 (즉시 적용, 재시작 X)</div>
+    <div class="copy-hint" style="margin-top:12px">방법 B — 서버 default 영구 변경 (모든 환자 default):</div>
+    <code>sed -i 's/^SUPERTONIC_VOICE=.*/SUPERTONIC_VOICE=${voice}/' /home/oem/바탕화면/학부연구생종합설계프로젝트/Remini/.env && lsof -ti:8000 | xargs -r kill</code>
+    <div class="copy-hint">그 다음 ai-server 다시 띄움 (사용자 직접).</div>
+  `;
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#F5DBA8" />
+    <title>remeni-ai patient</title>
+    <link rel="stylesheet" href="/static/patient.css?v=20260509-photoaspect" />
+  </head>
+  <body>
+    <main class="patient-root">
+      <video id="cameraFeed" class="camera-feed" autoplay muted playsinline></video>
+
+      <div class="visual-layer hidden" id="visualLayer">
+        <div class="visual-glow visual-glow-a"></div>
+        <div class="visual-glow visual-glow-b"></div>
+        <div class="visual-orb visual-orb-a"></div>
+        <div class="visual-orb visual-orb-b"></div>
+        <div class="visual-grid"></div>
+      </div>
+
+      <section id="memoryStage" class="memory-stage hidden" aria-label="memory photo">
+        <div class="memory-frame">
+          <canvas id="memoryCanvas" class="memory-canvas"></canvas>
+          <div id="memoryFallback" class="memory-fallback hidden">
+            <p class="memory-fallback-title">회상 사진 준비 중</p>
+            <p class="memory-fallback-copy">
+              `web/assets/memory-photo.jpg` 파일을 넣으면 이 자리에 표시됩니다.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <div id="visualizerContainer" class="visualizer-container visualizer-hidden" aria-hidden="true"></div>
+
+      <section class="subtitle-wrap">
+        <p id="subtitleText" class="subtitle"></p>
+        <p id="listeningText" class="listening-text"></p>
+        <button id="endTurnBtn" class="end-turn-btn hidden" type="button">말하기 완료</button>
+      </section>
+
+      <button id="adminToggleBtn" class="admin-toggle-btn" type="button" aria-controls="adminDrawer" aria-expanded="false">
+        관리 패널
+      </button>
+
+      <section id="adminDrawer" class="admin-drawer hidden" aria-hidden="true">
+        <div class="admin-drawer-backdrop"></div>
+        <div class="admin-drawer-panel">
+          <div class="admin-drawer-head">
+            <div>
+              <p class="admin-kicker">Patient Admin</p>
+              <h2 class="admin-title">개발자 화면 기능</h2>
+              <p class="admin-copy">이 패널 안에서 개발자용 화면의 기능을 그대로 사용할 수 있습니다.</p>
+            </div>
+            <div class="admin-head-actions">
+              <button id="adminRefreshBtn" class="admin-head-btn" type="button">새로고침</button>
+              <button id="adminCloseBtn" class="admin-head-btn primary" type="button">닫기</button>
+            </div>
+          </div>
+          <iframe
+            id="adminFrame"
+            class="admin-frame"
+            title="developer tools"
+            src="/"
+            loading="lazy"
+          ></iframe>
+        </div>
+      </section>
+
+      <section id="startOverlay" class="start-overlay">
+        <div class="start-panel">
+          <p class="start-kicker">Patient Mode</p>
+          <h1 class="start-title">화면을 켜두면 제가 계속 듣고 천천히 말씀드릴게요.</h1>
+          <p class="start-copy">
+            시작을 누르면 카메라와 마이크 권한을 요청하고, 이후에는 자막과 시청각 화면만 남습니다.
+          </p>
+          <label class="start-field" for="patientUserId">
+            <span class="start-field-label">사용자 ID</span>
+            <input id="patientUserId" class="start-input" type="text" placeholder="예: P001" />
+          </label>
+          <p id="startHint" class="start-hint">사용자 ID를 입력한 뒤 시작해 주세요.</p>
+          <button id="startBtn" class="start-btn" type="button">시작하기</button>
+
+          <div id="loadingWrap" class="loading-wrap hidden">
+            <div class="loading-spinner"></div>
+            <p id="loadingText" class="loading-text">준비 중...</p>
+            <div class="loading-bar-track">
+              <div id="loadingBarFill" class="loading-bar-fill"></div>
+            </div>
+            <p id="loadingPercent" class="loading-percent">0%</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="voice-picker" style="position:fixed;top:12px;right:12px;background:#fffdf5;color:#3e2723;padding:10px 14px;border-radius:10px;font-size:14px;font-weight:700;z-index:9999;backdrop-filter:blur(6px);border:1px solid rgba(78,52,46,0.24);box-shadow:0 6px 16px rgba(141,110,99,0.22);">
+        <label for="voicePicker" style="margin-right:8px;">목소리</label>
+        <select id="voicePicker" style="background:#ffffff;color:#3e2723;border:1px solid rgba(78,52,46,0.32);border-radius:6px;padding:5px 8px;font-weight:700;">
+          <optgroup label="여성">
+            <option value="F1">F1</option>
+            <option value="F2">F2</option>
+            <option value="F3" selected>F3</option>
+            <option value="F4">F4</option>
+            <option value="F5">F5</option>
+          </optgroup>
+          <optgroup label="남성">
+            <option value="M1">M1</option>
+            <option value="M2">M2</option>
+            <option value="M3">M3</option>
+            <option value="M4">M4</option>
+            <option value="M5">M5</option>
+          </optgroup>
+        </select>
+      </section>
+
+      <section id="debugPanel" class="debug-panel hidden">
+        <p class="debug-title">DEBUG</p>
+        <p id="debugSession" class="debug-line">session: -</p>
+        <p id="debugFace" class="debug-line">face: -</p>
+        <p id="debugEyes" class="debug-line">eyes: -</p>
+        <p id="debugEvent" class="debug-line">event: -</p>
+      </section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"></script>
+    <script src="/static/voice-loop.js?v=20260509-sync"></script>
+    <script src="/static/patient.js?v=20260415a"></script>
+    <script src="/static/patient-visualizer.js?v=20260415a"></script>
+    <script>
+      function tryInit() {
+        const container = document.getElementById("visualizerContainer");
+        if (!container || !window.PatientVisualizer) {
+          setTimeout(tryInit, 100);
+          return;
+        }
+        window._visualizer = new window.PatientVisualizer(container);
+      }
+      tryInit();
+    </script>
+  </body>
+</html>

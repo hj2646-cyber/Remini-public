@@ -1,0 +1,34 @@
+{
+  "name": "@workspace/api-server",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "cross-env NODE_ENV=development tsx ./src/index.ts",
+    "build": "tsx ./build.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "seed:graph": "tsx ./src/seed-neo4j.ts"
+  },
+  "dependencies": {
+    "@workspace/api-zod": "workspace:*",
+    "bcryptjs": "^2.4.3",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2",
+    "express": "^5",
+    "jsonwebtoken": "^9.0.2",
+    "neo4j-driver": "^6.0.1",
+    "web-push": "^3.6.7"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/cookie-parser": "^1.4.10",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/jsonwebtoken": "^9.0.7",
+    "@types/node": "catalog:",
+    "@types/web-push": "^3.6.4",
+    "cross-env": "^10.1.0",
+    "esbuild": "^0.27.3",
+    "tsx": "catalog:"
+  }
+}

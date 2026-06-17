@@ -1,0 +1,33 @@
+# experiments/ 전용 의존성 — 본 시스템 ai-server/requirements.txt 와 분리
+# 설치: python -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt
+
+# RAG 평가 표준 (Phase 1)
+ragas>=0.2.0
+datasets>=2.20.0
+
+# Vector RAG 비교군 (Phase 1)
+chromadb>=0.5.0
+sentence-transformers>=3.0.0   # ko-sroberta 로드용
+
+# Graph RAG 비교군 (Phase 1) — ai-server 와 동일 버전 사용
+neo4j>=5.20.0
+
+# LLM 클라이언트 (실험 한정 예외)
+google-generativeai>=0.8.0      # Gemini — 시나리오 생성, 베이스라인 응답
+openai>=1.50.0                  # OpenAI judge — Phase 2 14-item survey LLM-as-Judge
+ollama>=0.3.0                   # DSLM 로컬 호출
+
+# 통계
+scipy>=1.13.0
+statsmodels>=0.14.0             # ANOVA, Tukey HSD
+pingouin>=0.5.4                 # 비모수 검정 백업
+
+# 데이터 처리
+pandas>=2.2.0
+pyyaml>=6.0
+python-dotenv>=1.0.0            # 루트 .env 로드
+
+# 시각화 (notebooks/)
+matplotlib>=3.9.0
+seaborn>=0.13.0
+jupyter>=1.0.0

@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>remeni-ai</title>
+    <link rel="stylesheet" href="/static/styles.css?v=20260325c" />
+  </head>
+  <body>
+    <div class="bg-layer"></div>
+    <main class="app-shell">
+      <header class="hero">
+        <p class="eyebrow">remeni-ai</p>
+        <h1 id="titleText">remeni-ai</h1>
+        <p id="subtitleText" class="subtitle">Chat, voice, and proactive webcam care.</p>
+        <div class="hero-patient-row">
+          <p id="patientContext" class="patient-context hidden"></p>
+          <button id="adminChangePatientBtn" class="btn ghost hidden" type="button">환자 변경</button>
+        </div>
+      </header>
+
+      <section id="adminStartOverlay" class="admin-start-overlay">
+        <div class="admin-start-panel card">
+          <p class="eyebrow">Patient Scope</p>
+          <h2 id="adminStartTitle">관리할 환자 ID를 먼저 선택해 주세요.</h2>
+          <p id="adminStartCopy" class="subtitle">선택한 ID 기준으로 사진, 보호자 음성, 대화, Neo4j 조회를 분리해서 보여드립니다.</p>
+          <label class="field">
+            <span id="adminStartUserLabel">환자 ID</span>
+            <input id="adminStartUserId" type="text" placeholder="예: P001" />
+          </label>
+          <div class="voice-clone-actions">
+            <button id="adminStartBtn" class="btn primary" type="button">이 환자 관리 시작</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="controls card">
+        <div class="grid-two">
+          <label class="field">
+            <span id="sessionLabel">Session ID</span>
+            <input id="sessionId" type="text" />
+          </label>
+          <label class="field">
+            <span id="userLabel">User ID</span>
+            <input id="userId" type="text" readonly />
+          </label>
+        </div>
+        <label class="toggle">
+          <input id="ttsToggle" type="checkbox" checked />
+          <span id="ttsToggleLabel">Enable TTS</span>
+        </label>
+        <label class="toggle">
+          <input id="voiceCloneToggle" type="checkbox" />
+          <span id="voiceCloneToggleLabel">보호자 목소리 사용</span>
+        </label>
+        <label class="field tts-field">
+          <span id="ttsVoiceLabel">Korean Voice</span>
+          <select id="ttsVoice"></select>
+        </label>
+      </section>
+
+      <section class="patient-voice card">
+        <div class="voice-clone-head">
+          <div>
+            <p class="eyebrow">Patient Voice</p>
+            <h2>환자 음성 등록 (화자 분리용)</h2>
+            <p class="subtitle">환자 목소리를 등록하면, 주변 소리나 다른 사람 말은 무시하고 환자 말만 인식합니다.</p>
+          </div>
+        </div>
+        <div class="grid-two voice-clone-grid">
+          <label class="field">
+            <span>환자 음성 파일</span>
+            <input id="patientVoiceFiles" type="file" accept="audio/*" multiple />
+          </label>
+        </div>
+        <div class="voice-clone-actions">
+          <button id="patientVoiceRecordBtn" class="btn accent" type="button">🎙 환자 목소리 녹음</button>
+          <span id="patientVoiceRecordStatus" class="voice-record-status"></span>
+        </div>
+        <div id="patientRecordingsPreview" class="voice-recordings-preview hidden">
+          <p class="voice-record-count"></p>
+        </div>
+        <div class="voice-clone-actions">
+          <button id="uploadPatientVoiceBtn" class="btn primary" type="button">환자 음성 등록</button>
+          <button id="deletePatientVoiceBtn" class="btn ghost" type="button">등록 삭제</button>
+        </div>
+        <p id="patientVoiceStatus" class="status subtle">환자 음성이 등록되지 않았습니다. (화자 분리 비활성)</p>
+      </section>
+
+      <section class="voice-clone card">
+        <div class="voice-clone-head">
+          <div>
+            <p class="eyebrow">Caregiver Voice</p>
+            <h2 id="voiceCloneTitle">보호자 목소리 적용</h2>
+            <p id="voiceCloneCopy" class="subtitle">
+              보호자 음성 샘플을 올려두고 활성화하면, clone provider가 연결된 경우 그 목소리 느낌으로 읽습니다.
+            </p>
+          </div>
+          <button id="refreshVoiceProfilesBtn" class="btn ghost" type="button">새로고침</button>
+        </div>
+        <div class="grid-two voice-clone-grid">
+          <label class="field">
+            <span id="voiceProfileNameLabel">프로필 이름</span>
+            <input id="voiceProfileName" type="text" placeholder="예: 딸 목소리" />
+          </label>
+          <label class="field">
+            <span id="voiceProfileFilesLabel">샘플 음성</span>
+            <input id="voiceProfileFiles" type="file" accept="audio/*" multiple />
+          </label>
+        </div>
+        <div class="voice-clone-actions">
+          <button id="voiceRecordBtn" class="btn accent" type="button">🎙 보호자 목소리 녹음</button>
+          <span id="voiceRecordStatus" class="voice-record-status"></span>
+        </div>
+        <div id="voiceRecordingsPreview" class="voice-recordings-preview hidden">
+          <p class="voice-record-count"></p>
+        </div>
+        <div class="voice-clone-actions">
+          <button id="uploadVoiceProfileBtn" class="btn primary" type="button">프로필 업로드</button>
+        </div>
+        <div class="voice-prompt-list">
+          <p class="voice-prompt-title">보호자가 읽을 예시 문장</p>
+          <ol id="voicePromptList" class="voice-prompt-items">
+            <!-- 인사·감정 (억양 변화) -->
+            <li>안녕하세요, 오늘은 기분이 어떠세요?</li>
+            <li>아이고, 그런 일이 있으셨구나. 많이 속상하셨겠어요.</li>
+            <!-- 질문형 (끝올림 억양) -->
+            <li>혹시 옛날에 좋아하셨던 노래가 있으세요?</li>
+            <li>가장 좋아하시는 계절은 봄이에요, 가을이에요?</li>
+            <!-- 안내·설명형 (차분하고 긴 문장) -->
+            <li>오늘 오후 세 시에 병원 진료가 있으니까, 두 시쯤 준비하시면 돼요.</li>
+            <li>점심은 따뜻한 국이랑 밥을 준비해 드렸어요. 천천히 드세요.</li>
+            <!-- 감탄·반응 (짧고 강한 억양) -->
+            <li>와, 정말요? 그거 너무 좋은데요!</li>
+            <li>어머, 그때 그 이야기 저도 기억나요!</li>
+            <!-- 격려·안심 (부드러운 톤) -->
+            <li>괜찮아요, 천천히 생각나시면 그때 말씀해 주세요.</li>
+            <li>제가 항상 옆에 있으니까 걱정하지 마세요.</li>
+          </ol>
+        </div>
+        <div class="grid-two voice-clone-grid">
+          <label class="field">
+            <span id="voiceProfileSelectLabel">등록된 프로필</span>
+            <select id="voiceProfileSelect"></select>
+          </label>
+          <div class="field voice-clone-apply">
+            <span id="voiceProfileApplyLabel">기본 목소리</span>
+            <button id="applyVoiceProfileBtn" class="btn primary" type="button">이 프로필 사용</button>
+          </div>
+        </div>
+        <div class="voice-clone-actions">
+          <button id="deleteVoiceProfileBtn" class="btn ghost" type="button">선택 프로필 삭제</button>
+        </div>
+        <p id="voiceProfileStatus" class="status subtle">기본 TTS 음성을 사용 중입니다.</p>
+      </section>
+
+      <section class="memory-photo card">
+        <div class="voice-clone-head">
+          <div>
+            <p class="eyebrow">Memory Photo</p>
+            <h2 id="memoryPhotoTitle">회상 사진 시연</h2>
+            <p id="memoryPhotoCopy" class="subtitle">사진을 여러 장 저장해 두면, 대화 흐름에 맞는 사진을 시스템이 골라 보여줍니다.</p>
+          </div>
+          <button id="refreshMemoryPhotosBtn" class="btn ghost" type="button">새로고침</button>
+        </div>
+        <div class="grid-two voice-clone-grid">
+          <label class="field">
+            <span id="memoryPhotoNameLabel">사진 제목</span>
+            <input id="memoryPhotoName" type="text" placeholder="예: 가족 여행 사진" />
+          </label>
+          <label class="field">
+            <span id="memoryPhotoFileLabel">사진 파일</span>
+            <input id="memoryPhotoFile" type="file" accept="image/*" />
+          </label>
+        </div>
+        <label class="field voice-clone-grid">
+          <span id="memoryPhotoNoteLabel">사진 설명</span>
+          <textarea id="memoryPhotoNote" rows="2" placeholder="예: 1998년 부산 바닷가에서 딸과 함께 찍은 사진"></textarea>
+        </label>
+        <div class="voice-clone-actions">
+          <button id="uploadMemoryPhotoBtn" class="btn primary" type="button">사진 업로드</button>
+        </div>
+        <div class="grid-two voice-clone-grid">
+          <label class="field">
+            <span id="memoryPhotoSelectLabel">등록된 사진</span>
+            <select id="memoryPhotoSelect"></select>
+          </label>
+          <div class="field voice-clone-apply">
+            <span id="memoryPhotoApplyLabel">선택 사진 미리보기</span>
+            <button id="applyMemoryPhotoBtn" class="btn primary" type="button">이 사진 보기</button>
+          </div>
+        </div>
+        <div class="memory-photo-preview-wrap">
+          <img id="memoryPhotoPreview" class="memory-photo-preview hidden" alt="memory preview" />
+          <div id="memoryPhotoPreviewEmpty" class="memory-photo-empty">아직 선택된 사진이 없습니다.</div>
+        </div>
+        <div class="voice-clone-actions">
+          <button id="startReminiscenceBtn" class="btn primary" type="button">이 사진으로 회상 시작</button>
+        </div>
+        <p id="memoryPhotoStatus" class="status subtle">회상 사진이 아직 없습니다.</p>
+      </section>
+
+      <section class="camera card">
+        <div class="camera-head">
+          <h2 id="cameraTitle">Webcam Status</h2>
+          <div class="camera-row">
+            <label class="field camera-select-wrap">
+              <span id="cameraFacingLabel">Camera</span>
+              <select id="cameraFacing">
+                <option value="user">Front</option>
+                <option value="environment">Back</option>
+              </select>
+            </label>
+            <button id="cameraBtn" class="btn primary" type="button">Start Webcam</button>
+            <span id="cameraState" class="pill">Stopped</span>
+            <span id="faceState" class="pill muted">No Face</span>
+            <span id="eyeState" class="pill muted">Eyes Unknown</span>
+          </div>
+        </div>
+        <div class="camera-preview">
+          <video id="cameraFeed" autoplay muted playsinline></video>
+          <canvas id="landmarkCanvas"></canvas>
+        </div>
+      </section>
+
+      <section id="chatLog" class="chat-log card" aria-live="polite"></section>
+
+      <section class="composer card">
+        <label class="field">
+          <span id="messageLabel">Message</span>
+          <textarea id="messageInput" rows="3" placeholder="Example: What day is it today?"></textarea>
+        </label>
+        <div class="action-row">
+          <button id="sendBtn" class="btn primary">Send</button>
+          <button id="micBtn" class="btn danger">Start Voice</button>
+          <button id="clearBtn" class="btn ghost">Clear Chat</button>
+        </div>
+        <div id="liveTranscriptWrap" class="live-transcript">
+          <p id="liveTranscriptTitle" class="live-title">실시간 음성 인식</p>
+          <p id="liveTranscriptText" class="live-text">아직 인식된 내용이 없습니다.</p>
+        </div>
+      </section>
+
+      <p id="status" class="status">Ready</p>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"></script>
+    <script src="/static/app.js?v=20260325c"></script>
+  </body>
+</html>

@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-label="Remini caregiver app icon">
+  <rect width="1024" height="1024" fill="#0f172a"/>
+  <rect x="68" y="68" width="888" height="888" rx="210" fill="#0f766e"/>
+  <circle cx="206" cy="174" r="246" fill="#2dd4bf" opacity="0.34"/>
+  <circle cx="850" cy="872" r="332" fill="#2563eb" opacity="0.34"/>
+  <circle cx="790" cy="246" r="88" fill="#fb7185"/>
+  <circle cx="790" cy="246" r="44" fill="#fff7ed"/>
+
+  <path
+    d="M512 198c101 58 202 78 312 84-16 266-113 461-312 599-199-138-296-333-312-599 110-6 211-26 312-84Z"
+    fill="#020617"
+    opacity="0.18"
+    transform="translate(0 30)"
+  />
+  <path
+    d="M512 168c101 58 202 78 312 84-16 266-113 461-312 599-199-138-296-333-312-599 110-6 211-26 312-84Z"
+    fill="#f8fafc"
+  />
+  <path
+    d="M512 220c78 42 155 61 242 70-20 213-100 369-242 476-142-107-222-263-242-476 87-9 164-28 242-70Z"
+    fill="#dff7ff"
+  />
+  <path
+    d="M512 306c64-65 172-28 172 72 0 119-172 226-172 226S340 497 340 378c0-100 108-137 172-72Z"
+    fill="#0f766e"
+  />
+  <path
+    d="M324 522h112l48-82 76 154 48-72h96"
+    fill="none"
+    stroke="#fb7185"
+    stroke-width="42"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+</svg>
